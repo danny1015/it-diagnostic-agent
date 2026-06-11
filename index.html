@@ -128,11 +128,113 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .quick-btn:hover{border-color:var(--accent2);color:var(--text);background:var(--bg3)}
 .no-key-banner{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.25);border-radius:var(--radius);padding:8px 12px;font-size:11px;color:var(--warn);margin-bottom:8px;display:flex;align-items:center;gap:8px;cursor:pointer}
 .no-key-banner:hover{background:rgba(245,166,35,.14)}
+
+/* ── Mobile hamburger ── */
+.btn-hamburger{display:none;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:34px;height:34px;border-radius:var(--radius);cursor:pointer;align-items:center;justify-content:center;flex-shrink:0}
+/* ── Sidebar overlay ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40}
+.sidebar-overlay.open{display:block}
+/* ── Tablet ── */
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;grid-template-rows:56px 1fr}
+  .sidebar{position:fixed;left:-290px;top:0;height:100vh;width:280px;z-index:50;transition:left .25s ease}
+  .sidebar.open{left:0;box-shadow:4px 0 24px rgba(0,0,0,.5)}
+  .btn-hamburger{display:flex}
+  .api-status{display:none}
+  .content{grid-template-columns:1fr;grid-template-rows:1fr auto}
+  .chat-panel{max-height:320px;border-top:1px solid var(--border)}
+  .node-grid.cols-3{grid-template-columns:1fr 1fr}
+  .node-grid.cols-2{grid-template-columns:1fr}
+  .tree-panel{padding:14px}
+}
+/* ── Phone ── */
+@media(max-width:480px){
+  .node-grid.cols-3,.node-grid.cols-2{grid-template-columns:1fr}
+  .chat-panel{max-height:260px}
+  .topbar{padding:0 12px}
+  .logo{font-size:12px}
+}
+
+.modal-tab{padding:5px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s}
+.modal-tab.active{background:var(--accent);color:#0d0f12;border-color:var(--accent)}
+.modal-tab:hover:not(.active){border-color:var(--border2);color:var(--text)}
+#chat-context-model{font-family:var(--mono);font-size:10px;color:var(--text3)}
+
+/* ── Light theme ── */
+body.light{
+  --bg:#f0f2f5;--bg2:#ffffff;--bg3:#e8eaf0;
+  --border:#d0d5e0;--border2:#b8bfcc;
+  --text:#1a1f2e;--text2:#4a5270;--text3:#6b7590;
+  --accent:#00a88a;--accent2:#0077cc;--accent3:#e05a20;
+  --warn:#c47a00;--danger:#cc2222;
+}
+body.light .nc-title{color:#1a1f2e}
+body.light .nc-sub{color:#4a5270}
+body.light .node-tag{color:#00a88a}
+body.light .node-title{color:#1a1f2e}
+body.light .node-sub{color:#4a5270}
+body.light .step-list li{color:#4a5270}
+body.light .detail-group-title{color:#6b7590}
+body.light .expand-toggle{color:#6b7590}
+body.light .nav-item{color:#4a5270}
+body.light .nav-item.active{color:#00a88a;background:#e8f5f2;border-color:#b8e4da}
+body.light .nav-item:hover{color:#1a1f2e;background:#e8eaf0}
+body.light .nav-sub-item{color:#6b7590}
+body.light .nav-sub-item:hover{color:#1a1f2e}
+body.light .sidebar-label{color:#8892a4}
+body.light .panel-title{color:#8892a4}
+body.light .section-sep{color:#8892a4}
+body.light .section-sep::after{background:#d0d5e0}
+body.light .tab{color:#6b7590;border-color:#c8cdd8}
+body.light .tab.active{color:#00a88a;border-color:#00a88a;background:#e8f5f2}
+body.light .h-title{color:#4a5270}
+body.light .h-time{color:#8892a4}
+body.light .chat-header-title{color:#8892a4}
+body.light .chat-context{color:#8892a4}
+body.light .msg-name{color:#8892a4}
+body.light .msg-text{color:#1a1f2e}
+body.light .chat-input{color:#1a1f2e}
+body.light .chat-input::placeholder{color:#aab0bf}
+body.light .chat-hint{color:#aab0bf}
+body.light .chat-empty-title{color:#4a5270}
+body.light .chat-empty-sub{color:#8892a4}
+body.light .quick-btn{color:#4a5270;background:#ffffff;border-color:#d0d5e0}
+body.light .quick-btn:hover{color:#1a1f2e;border-color:#0077cc;background:#f0f6ff}
+body.light .api-status{color:#8892a4}
+body.light .logo{color:#00a88a}
+body.light .modal-title{color:#1a1f2e}
+body.light .modal-sub{color:#4a5270}
+body.light .form-label{color:#8892a4}
+body.light .modal-note{color:#6b7590;background:#f0f2f5;border-color:#d0d5e0}
+body.light .btn-topbar{color:#4a5270;background:#f0f2f5;border-color:#c8cdd8}
+body.light .btn-topbar:hover{color:#1a1f2e}
+body.light .node-badge{filter:saturate(1.2)}
+body.light .send-btn{background:#00a88a;color:#ffffff}
+body.light .typing-dot{background:#00a88a}
+body.light .status-dot.ok{background:#00a88a;box-shadow:0 0 6px #00a88a}
+body.light .msg-text{background:#f8f9fc;border-color:#d0d5e0}
+body.light .msg.user .msg-text{background:#e8f2ff;border-color:#b8d4f0}
+body.light .node-card{background:#ffffff}
+body.light .node-card:hover{background:#f5f7fa}
+body.light .sidebar{background:#ffffff}
+body.light .topbar{background:#ffffff}
+body.light .chat-panel{background:#f8f9fc}
+body.light .chat-input{background:#ffffff;border-color:#c8cdd8;color:#1a1f2e}
+body.light .form-input{background:#f0f2f5;color:#1a1f2e}
+body.light .modal{background:#ffffff}
+body.light .history-item:hover{background:#f0f2f5}
 </style>
 </head>
 <body>
 <div class="app">
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <header class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+  <button class="btn-hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/>
+    </svg>
+  </button>
   <div class="logo">
     <div class="logo-icon">
       <svg viewBox="0 0 16 16" fill="none" stroke="#0d0f12" stroke-width="1.8" stroke-linecap="round">
@@ -141,11 +243,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     </div>
     IT Diagnostic Agent
   </div>
+  </div>
   <div class="topbar-right">
     <div class="api-status">
       <div class="status-dot" id="statusDot"></div>
       <span id="statusText"></span>
     </div>
+    <select class="btn-topbar" id="modelSelect" onchange="switchProvider(this.value)" style="cursor:pointer;padding:5px 8px">
+      <option value="claude">Claude</option>
+      <option value="gemini">Gemini</option>
+      <option value="openai">OpenAI</option>
+      <option value="ollama">Ollama (本地)</option>
+    </select>
+    <button class="btn-topbar btn-theme" onclick="toggleTheme()" id="themeBtn" title="切換主題">
+      <span id="themeIcon">☀️</span>
+    </button>
     <button class="btn-topbar btn-lang" onclick="toggleLang()">
       <span>&#127760;</span><span id="langLabel"></span>
     </button>
@@ -403,7 +515,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     <div class="chat-panel">
       <div class="chat-header">
         <div class="chat-header-title" id="chat-header-title"></div>
-        <div class="chat-context">claude-sonnet-4-20250514</div>
+        <div class="chat-context" id="chat-context-model"></div>
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-empty" id="chatEmpty">
@@ -434,15 +546,57 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 </div>
 
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
+  <div class="modal" style="width:500px">
     <div class="modal-title" id="modal-title"></div>
     <div class="modal-sub" id="modal-sub"></div>
-    <label class="form-label" id="modal-label"></label>
-    <input class="form-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." autocomplete="off">
+
+    <!-- Provider Tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="modal-tab active" onclick="switchModalTab('claude',this)">Claude</button>
+      <button class="modal-tab" onclick="switchModalTab('gemini',this)">Gemini</button>
+      <button class="modal-tab" onclick="switchModalTab('openai',this)">OpenAI</button>
+      <button class="modal-tab" onclick="switchModalTab('ollama',this)">Ollama</button>
+    </div>
+
+    <!-- Claude -->
+    <div class="provider-form" id="form-claude">
+      <label class="form-label">API Key</label>
+      <input class="form-input" id="key-claude" type="password" placeholder="sk-ant-api03-..." autocomplete="off">
+      <label class="form-label">Model</label>
+      <input class="form-input" id="model-claude" type="text" value="claude-sonnet-4-20250514">
+    </div>
+
+    <!-- Gemini -->
+    <div class="provider-form" id="form-gemini" style="display:none">
+      <label class="form-label">API Key</label>
+      <input class="form-input" id="key-gemini" type="password" placeholder="AIza..." autocomplete="off">
+      <label class="form-label">Model</label>
+      <input class="form-input" id="model-gemini" type="text" value="gemini-2.5-flash">
+    </div>
+
+    <!-- OpenAI compatible -->
+    <div class="provider-form" id="form-openai" style="display:none">
+      <label class="form-label">API Key</label>
+      <input class="form-input" id="key-openai" type="password" placeholder="sk-..." autocomplete="off">
+      <label class="form-label">Model</label>
+      <input class="form-input" id="model-openai" type="text" value="gpt-4o-mini">
+      <label class="form-label">Endpoint (可自訂)</label>
+      <input class="form-input" id="endpoint-openai" type="text" value="https://api.openai.com/v1">
+    </div>
+
+    <!-- Ollama -->
+    <div class="provider-form" id="form-ollama" style="display:none">
+      <label class="form-label">本地端點</label>
+      <input class="form-input" id="endpoint-ollama" type="text" value="http://localhost:11434">
+      <label class="form-label">Model</label>
+      <input class="form-input" id="model-ollama" type="text" value="gemma3:12b">
+      <div class="modal-note" style="margin-top:0;margin-bottom:12px">Ollama 不需要 API Key。請確認本機已安裝並啟動 Ollama 服務。</div>
+    </div>
+
     <div class="modal-note" id="modal-note"></div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()" id="modal-cancel"></button>
-      <button class="btn-save" onclick="saveApiKey()" id="modal-save"></button>
+      <button class="btn-save" onclick="saveProviderSettings()" id="modal-save"></button>
     </div>
   </div>
 </div>
@@ -590,10 +744,26 @@ const I = {
 };
 
 let lang = localStorage.getItem('it_lang') || 'zh';
-let apiKey = localStorage.getItem('it_key') || '';
+let theme = localStorage.getItem('it_theme') || 'dark';
+let currentProvider = localStorage.getItem('it_provider') || 'claude';
 let chatHistory = [];
 let sessionHistory = JSON.parse(localStorage.getItem('it_hist') || '[]');
 let isLoading = false;
+let modalTab = 'claude';
+
+// Provider configs
+const providers = {
+  claude:  { key: localStorage.getItem('it_key_claude') || '', model: localStorage.getItem('it_model_claude') || 'claude-sonnet-4-20250514', endpoint: 'https://api.anthropic.com' },
+  gemini:  { key: localStorage.getItem('it_key_gemini') || '', model: localStorage.getItem('it_model_gemini') || 'gemini-2.5-flash', endpoint: '' },
+  openai:  { key: localStorage.getItem('it_key_openai') || '', model: localStorage.getItem('it_model_openai') || 'gpt-4o-mini', endpoint: localStorage.getItem('it_ep_openai') || 'https://api.openai.com/v1' },
+  ollama:  { key: '', model: localStorage.getItem('it_model_ollama') || 'gemma3:12b', endpoint: localStorage.getItem('it_ep_ollama') || 'http://localhost:11434' },
+};
+
+// Backward compat: migrate old single apiKey
+if(!providers.claude.key && localStorage.getItem('it_key')) {
+  providers.claude.key = localStorage.getItem('it_key');
+  localStorage.setItem('it_key_claude', providers.claude.key);
+}
 
 function L(){ return I[lang]; }
 function $t(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
@@ -605,7 +775,7 @@ function applyLang(){
   document.documentElement.lang=T.lang==='zh'?'zh-TW':'en';
   document.title='IT Diagnostic Agent — '+(T.lang==='zh'?'智慧故障排除助手':'Smart IT Troubleshooting');
   $t('langLabel',T.next);
-  $t('statusText',apiKey?T.statusOk:T.statusNo);
+  // statusText updated by updateStatus()
   $t('btnApiKey',T.btnKey);
   $t('lb-modules',T.modules); $t('lb-history',T.history);
   $t('nav-net',T.navNet); $t('nav-hw',T.navHw); $t('nav-sw',T.navSw);
@@ -710,18 +880,23 @@ function askQ(key){
 
 function updateStatus(){
   const T=L();
-  document.getElementById('statusDot').className='status-dot'+(apiKey?' ok':'');
-  $t('statusText',apiKey?T.statusOk:T.statusNo);
-  document.getElementById('noKeyBanner').style.display=apiKey?'none':'flex';
+  const p = providers[currentProvider];
+  const hasKey = currentProvider === 'ollama' || !!p.key;
+  document.getElementById('statusDot').className='status-dot'+(hasKey?' ok':'');
+  const providerName = {claude:'Claude',gemini:'Gemini',openai:'OpenAI',ollama:'Ollama'}[currentProvider];
+  $t('statusText', hasKey ? providerName+' — '+T.statusOk : providerName+' — '+T.statusNo);
+  document.getElementById('noKeyBanner').style.display=hasKey?'none':'flex';
+  // Sync select
+  const sel = document.getElementById('modelSelect');
+  if(sel) sel.value = currentProvider;
+  // Update chat context label
+  $t('chat-context-model', p.model || '');
 }
 
-function openModal(){ document.getElementById('modalOverlay').classList.add('open'); document.getElementById('apiKeyInput').value=apiKey; setTimeout(()=>document.getElementById('apiKeyInput').focus(),50); }
+// openModal defined below in saveProviderSettings section
 function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
 
-function saveApiKey(){
-  const v=document.getElementById('apiKeyInput').value.trim(); if(!v) return;
-  apiKey=v; localStorage.setItem('it_key',apiKey); updateStatus(); closeModal();
-}
+// saveApiKey replaced by saveProviderSettings
 
 function addMessage(role,text){
   const empty=document.getElementById('chatEmpty'); if(empty) empty.remove();
@@ -748,24 +923,20 @@ function removeTyping(){ const t=document.getElementById('typingMsg'); if(t) t.r
 async function sendMessage(){
   const input=document.getElementById('chatInput');
   const text=input.value.trim(); if(!text||isLoading) return;
-  if(!apiKey){ openModal(); return; }
+  const p = providers[currentProvider];
+  if(currentProvider !== 'ollama' && !p.key){ openModal(); return; }
   isLoading=true; document.getElementById('sendBtn').disabled=true;
   input.value=''; input.style.height='auto';
   addMessage('user',text); chatHistory.push({role:'user',content:text}); addTyping();
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,system:L().sys,messages:chatHistory})
-    });
-    const data=await res.json(); removeTyping();
-    if(data.error){ addMessage('agent','⚠️ '+data.error.message); }
-    else{
-      const reply=data.content[0].text;
-      addMessage('agent',reply); chatHistory.push({role:'assistant',content:reply});
-      saveToHistory(text,reply);
-    }
-  }catch(e){ removeTyping(); addMessage('agent','⚠️ Connection failed.\n\n'+e.message); }
+    const reply = await callLLM(chatHistory, L().sys);
+    removeTyping();
+    addMessage('agent',reply); chatHistory.push({role:'assistant',content:reply});
+    saveToHistory(text,reply);
+  }catch(e){
+    removeTyping();
+    addMessage('agent','⚠️ '+e.message);
+  }
   isLoading=false; document.getElementById('sendBtn').disabled=false;
   document.getElementById('chatInput').focus();
 }
@@ -784,7 +955,171 @@ function renderHistory(){
 }
 
 applyLang();
+applyTheme();
 updateStatus();
+
+function toggleSidebar(){
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+  document.querySelector('.sidebar').classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebarOverlay').classList.remove('open');
+  document.querySelector('.sidebar').classList.remove('open');
+}
+// Close sidebar when nav item clicked on mobile
+document.querySelectorAll('.nav-item,.nav-sub-item').forEach(el=>{
+  el.addEventListener('click',()=>{
+    if(window.innerWidth<=768) closeSidebar();
+  });
+});
+
+function toggleTheme(){
+  theme = theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('it_theme', theme);
+  applyTheme();
+}
+function applyTheme(){
+  document.body.classList.toggle('light', theme === 'light');
+  const icon = document.getElementById('themeIcon');
+  if(icon) icon.textContent = theme === 'light' ? '🌙' : '☀️';
+}
+function switchProvider(p){
+  currentProvider = p;
+  localStorage.setItem('it_provider', p);
+  updateStatus();
+}
+
+// ── LLM Adapter ──────────────────────────────────────────────
+async function callLLM(messages, systemPrompt){
+  switch(currentProvider){
+    case 'claude':  return await callClaude(messages, systemPrompt);
+    case 'gemini':  return await callGemini(messages, systemPrompt);
+    case 'openai':  return await callOpenAI(messages, systemPrompt);
+    case 'ollama':  return await callOllama(messages, systemPrompt);
+    default: throw new Error('Unknown provider: ' + currentProvider);
+  }
+}
+
+async function callClaude(messages, systemPrompt){
+  const p = providers.claude;
+  if(!p.key) throw new Error('Claude API Key not set');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':p.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:p.model, max_tokens:1024, system:systemPrompt, messages})
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content[0].text;
+}
+
+async function callGemini(messages, systemPrompt){
+  const p = providers.gemini;
+  if(!p.key) throw new Error('Gemini API Key not set');
+  // Convert messages to Gemini format
+  const contents = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{text: m.content}]
+  }));
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${p.model}:generateContent?key=${p.key}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      system_instruction:{parts:[{text:systemPrompt}]},
+      contents,
+      generationConfig:{maxOutputTokens:1024}
+    })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.candidates[0].content.parts[0].text;
+}
+
+async function callOpenAI(messages, systemPrompt){
+  const p = providers.openai;
+  if(!p.key) throw new Error('OpenAI API Key not set');
+  const res = await fetch(p.endpoint + '/chat/completions', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+p.key},
+    body:JSON.stringify({
+      model:p.model,
+      max_tokens:1024,
+      messages:[{role:'system',content:systemPrompt}, ...messages]
+    })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.choices[0].message.content;
+}
+
+async function callOllama(messages, systemPrompt){
+  const p = providers.ollama;
+  const res = await fetch(p.endpoint + '/v1/chat/completions', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:p.model,
+      messages:[{role:'system',content:systemPrompt}, ...messages]
+    })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  return data.choices[0].message.content;
+}
+function switchModalTab(tab, btn){
+  modalTab = tab;
+  document.querySelectorAll('.provider-form').forEach(f=>f.style.display='none');
+  document.querySelectorAll('.modal-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('form-'+tab).style.display='block';
+  btn.classList.add('active');
+}
+
+function openModal(){
+  document.getElementById('modalOverlay').classList.add('open');
+  // Populate current values
+  document.getElementById('key-claude').value = providers.claude.key;
+  document.getElementById('model-claude').value = providers.claude.model;
+  document.getElementById('key-gemini').value = providers.gemini.key;
+  document.getElementById('model-gemini').value = providers.gemini.model;
+  document.getElementById('key-openai').value = providers.openai.key;
+  document.getElementById('model-openai').value = providers.openai.model;
+  document.getElementById('endpoint-openai').value = providers.openai.endpoint;
+  document.getElementById('model-ollama').value = providers.ollama.model;
+  document.getElementById('endpoint-ollama').value = providers.ollama.endpoint;
+  // Switch to current provider tab
+  const tabs = document.querySelectorAll('.modal-tab');
+  const provList = ['claude','gemini','openai','ollama'];
+  const idx = provList.indexOf(currentProvider);
+  if(idx>=0 && tabs[idx]) switchModalTab(currentProvider, tabs[idx]);
+  setTimeout(()=>{ const f=document.querySelector('#form-'+modalTab+' .form-input'); if(f) f.focus(); }, 50);
+}
+
+function saveProviderSettings(){
+  providers.claude.key   = document.getElementById('key-claude').value.trim();
+  providers.claude.model = document.getElementById('model-claude').value.trim();
+  providers.gemini.key   = document.getElementById('key-gemini').value.trim();
+  providers.gemini.model = document.getElementById('model-gemini').value.trim();
+  providers.openai.key      = document.getElementById('key-openai').value.trim();
+  providers.openai.model    = document.getElementById('model-openai').value.trim();
+  providers.openai.endpoint = document.getElementById('endpoint-openai').value.trim();
+  providers.ollama.model    = document.getElementById('model-ollama').value.trim();
+  providers.ollama.endpoint = document.getElementById('endpoint-ollama').value.trim();
+  // Persist
+  localStorage.setItem('it_key_claude',   providers.claude.key);
+  localStorage.setItem('it_model_claude', providers.claude.model);
+  localStorage.setItem('it_key_gemini',   providers.gemini.key);
+  localStorage.setItem('it_model_gemini', providers.gemini.model);
+  localStorage.setItem('it_key_openai',   providers.openai.key);
+  localStorage.setItem('it_model_openai', providers.openai.model);
+  localStorage.setItem('it_ep_openai',    providers.openai.endpoint);
+  localStorage.setItem('it_model_ollama', providers.ollama.model);
+  localStorage.setItem('it_ep_ollama',    providers.ollama.endpoint);
+  // Fix #1: switch currentProvider to the tab being saved
+  currentProvider = modalTab;
+  localStorage.setItem('it_provider', currentProvider);
+  updateStatus();
+  closeModal();
+}
 </script>
 </body>
 </html>
