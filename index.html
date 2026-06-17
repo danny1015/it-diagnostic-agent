@@ -93,6 +93,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .msg.user .msg-text{background:rgba(0,153,255,.08);border-color:rgba(0,153,255,.2)}
 .msg-text p{margin-bottom:6px}.msg-text p:last-child{margin-bottom:0}
 .msg-text code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--accent)}
+.msg-text pre{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:8px 10px;border-radius:var(--radius);color:var(--accent);overflow:auto;white-space:pre-wrap;margin:6px 0}
+.msg-text pre code{background:transparent;padding:0;border-radius:0;color:inherit}
 .msg-text strong{color:var(--text);font-weight:500}
 .typing-indicator{display:flex;gap:4px;align-items:center;padding:10px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg)}
 .typing-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:typing 1.2s infinite}
@@ -747,7 +749,7 @@ let lang = localStorage.getItem('it_lang') || 'zh';
 let theme = localStorage.getItem('it_theme') || 'dark';
 let currentProvider = localStorage.getItem('it_provider') || 'claude';
 let chatHistory = [];
-let sessionHistory = JSON.parse(localStorage.getItem('it_hist') || '[]');
+let sessionHistory = loadHistory();
 let isLoading = false;
 let modalTab = 'claude';
 
@@ -769,6 +771,24 @@ function L(){ return I[lang]; }
 function $t(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
 function $h(id,v){ const e=document.getElementById(id); if(e) e.innerHTML=v; }
 function $s(id,arr){ const e=document.getElementById(id); if(e) e.innerHTML=arr.map(s=>`<li>${s}</li>`).join(''); }
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[ch]));
+}
+function loadHistory(){
+  try{
+    const parsed = JSON.parse(localStorage.getItem('it_hist') || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  }catch{
+    localStorage.removeItem('it_hist');
+    return [];
+  }
+}
 
 function applyLang(){
   const T=L();
@@ -831,7 +851,16 @@ function applyLang(){
   $t('chat-header-title',T.chatTitle);
   $t('empty-title',T.emptyTitle); $t('empty-sub',T.emptySub);
   const qb=document.getElementById('quickBtns');
-  if(qb) qb.innerHTML=T.quickLabels.map((l,i)=>`<button class="quick-btn" onclick="askQ('${T.quickKeys[i]}')">${l}</button>`).join('');
+  if(qb){
+    qb.replaceChildren(...T.quickLabels.map((label,i)=>{
+      const btn=document.createElement('button');
+      btn.className='quick-btn';
+      btn.type='button';
+      btn.textContent=label;
+      btn.addEventListener('click',()=>askQ(T.quickKeys[i]));
+      return btn;
+    }));
+  }
   const ci=document.getElementById('chatInput'); if(ci) ci.placeholder=T.placeholder;
   $t('chatHint',T.hint);
   $t('banner-txt',T.banner);
@@ -903,12 +932,45 @@ function addMessage(role,text){
   const msgs=document.getElementById('chatMessages');
   const div=document.createElement('div'); div.className='msg '+role;
   const name=role==='user'?L().userName:'IT Diagnostic Agent';
-  div.innerHTML=`<div class="msg-avatar">${role==='user'?'YOU':'AI'}</div><div class="msg-body"><div class="msg-name">${name}</div><div class="msg-text">${fmt(text)}</div></div>`;
+  const avatar=document.createElement('div');
+  avatar.className='msg-avatar';
+  avatar.textContent=role==='user'?'YOU':'AI';
+  const body=document.createElement('div');
+  body.className='msg-body';
+  const nameEl=document.createElement('div');
+  nameEl.className='msg-name';
+  nameEl.textContent=name;
+  const textEl=document.createElement('div');
+  textEl.className='msg-text';
+  textEl.innerHTML=fmt(text);
+  body.append(nameEl,textEl);
+  div.append(avatar,body);
   msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
 }
 
 function fmt(t){
-  return t.replace(/```(\w*)\n?([\s\S]*?)```/g,'<code>$2</code>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'</p><p>').replace(/\n- /g,'\n• ').replace(/\n/g,'<br>').replace(/^/,'<p>').replace(/$/,'</p>');
+  const codeBlocks=[];
+  let safe=escapeHtml(t).replace(/```(\w*)\n?([\s\S]*?)```/g,(_,lang,code)=>{
+    const marker=`@@CODEBLOCK_${codeBlocks.length}@@`;
+    codeBlocks.push(`<pre><code>${code}</code></pre>`);
+    return marker;
+  });
+  const inlineCode=[];
+  safe=safe.replace(/`([^`]+)`/g,(_,code)=>{
+    const marker=`@@INLINECODE_${inlineCode.length}@@`;
+    inlineCode.push(`<code>${code}</code>`);
+    return marker;
+  });
+  safe=safe
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\n- /g,'\n• ')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br>')
+    .replace(/^/,'<p>')
+    .replace(/$/,'</p>');
+  codeBlocks.forEach((html,i)=>{ safe=safe.replace(`@@CODEBLOCK_${i}@@`,html); });
+  inlineCode.forEach((html,i)=>{ safe=safe.replace(`@@INLINECODE_${i}@@`,html); });
+  return safe;
 }
 
 function addTyping(){
@@ -950,8 +1012,31 @@ function saveToHistory(q,a){
 
 function renderHistory(){
   const list=document.getElementById('historyList');
-  if(!sessionHistory.length){ list.innerHTML=`<div style="font-size:11px;color:var(--text3);padding:4px 10px">${L().noHistory}</div>`; return; }
-  list.innerHTML=sessionHistory.slice(0,8).map(item=>`<div class="history-item" onclick="(function(){const ci=document.getElementById('chatInput');ci.value=${JSON.stringify(item.q)};autoResize(ci);})()"><div class="h-title">${item.title}</div><div class="h-time">${item.time}</div></div>`).join('');
+  list.replaceChildren();
+  if(!sessionHistory.length){
+    const empty=document.createElement('div');
+    empty.style.cssText='font-size:11px;color:var(--text3);padding:4px 10px';
+    empty.textContent=L().noHistory;
+    list.appendChild(empty);
+    return;
+  }
+  sessionHistory.slice(0,8).forEach(item=>{
+    const row=document.createElement('div');
+    row.className='history-item';
+    row.addEventListener('click',()=>{
+      const ci=document.getElementById('chatInput');
+      ci.value=item.q || '';
+      autoResize(ci);
+    });
+    const title=document.createElement('div');
+    title.className='h-title';
+    title.textContent=item.title || '';
+    const time=document.createElement('div');
+    time.className='h-time';
+    time.textContent=item.time || '';
+    row.append(title,time);
+    list.appendChild(row);
+  });
 }
 
 applyLang();
