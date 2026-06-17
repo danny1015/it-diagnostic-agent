@@ -25,6 +25,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .btn-topbar:hover{border-color:var(--accent);color:var(--accent)}
 .btn-lang{display:flex;align-items:center;gap:5px}
 .btn-lang:hover{border-color:var(--accent2)!important;color:var(--accent2)!important}
+.btn-topbar.active{border-color:var(--accent);color:var(--accent);background:rgba(0,212,170,.08)}
 .sidebar{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
 .sidebar-section{padding:16px 14px 8px}
 .sidebar-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
@@ -46,15 +47,29 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .tree-panel{overflow-y:auto;padding:20px;border-right:1px solid var(--border)}
 .panel-title{font-family:var(--mono);font-size:12px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px}
 .tab-row{display:flex;gap:6px;margin-bottom:18px}
+.tree-toolbar{display:none;gap:8px;flex-wrap:wrap;margin:-6px 0 16px}
+body.edit-mode .tree-toolbar{display:flex}
+.btn-tool{background:var(--bg2);border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);font-family:var(--mono);font-size:10px;padding:5px 10px;cursor:pointer}
+.btn-tool:hover{border-color:var(--accent2);color:var(--accent2)}
+.btn-danger:hover{border-color:var(--danger);color:var(--danger)}
 .tab{padding:5px 14px;border-radius:var(--radius);border:1px solid var(--border2);font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;transition:all .15s;background:transparent}
 .tab.active{background:var(--bg3);color:var(--accent);border-color:var(--accent)}
 .tree-section{display:none}.tree-section.active{display:block}
 .node-root{background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--accent);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:16px}
+.node-root-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.node-root-main{min-width:0}
 .node-tag{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:4px}
 .node-title{font-size:14px;font-weight:500;color:var(--text)}
 .node-sub{font-size:12px;color:var(--text2);margin-top:2px}
 .node-grid{display:grid;gap:8px}.cols-2{grid-template-columns:1fr 1fr}.cols-3{grid-template-columns:1fr 1fr 1fr}
 .node-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;cursor:pointer;transition:all .15s}
+.node-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.node-card-main{min-width:0}
+.edit-actions{display:none;gap:6px;flex-shrink:0}
+body.edit-mode .edit-actions{display:flex}
+.icon-btn{width:26px;height:26px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:12px;line-height:1}
+.icon-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.icon-btn.danger:hover{border-color:var(--danger);color:var(--danger)}
 .node-card:hover{border-color:var(--border2);background:var(--bg3)}.node-card.expanded{border-color:var(--accent2)}
 .node-badge{display:inline-flex;align-items:center;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;margin-bottom:6px;font-weight:500}
 .badge-teal{background:rgba(0,212,170,.12);color:var(--accent);border:1px solid rgba(0,212,170,.25)}
@@ -114,7 +129,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .modal-sub{font-size:12px;color:var(--text2);margin-bottom:20px}
 .form-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;display:block}
 .form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .15s;margin-bottom:14px}
+.form-textarea{width:100%;min-height:110px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;resize:vertical;margin-bottom:14px;line-height:1.5}
 .form-input:focus{border-color:var(--accent2)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modal-note{font-size:11px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;margin-bottom:18px;line-height:1.6}
 .modal-note a{color:var(--accent2);text-decoration:none}
 .modal-btns{display:flex;gap:8px;justify-content:flex-end}
@@ -263,6 +280,7 @@ body.light .history-item:hover{background:#f0f2f5}
     <button class="btn-topbar btn-lang" onclick="toggleLang()">
       <span>&#127760;</span><span id="langLabel"></span>
     </button>
+    <button class="btn-topbar" onclick="toggleEditMode()" id="btnEditTree">Edit</button>
     <button class="btn-topbar" onclick="openModal()" id="btnApiKey"></button>
   </div>
 </header>
@@ -270,37 +288,7 @@ body.light .history-item:hover{background:#f0f2f5}
 <aside class="sidebar">
   <div class="sidebar-section">
     <div class="sidebar-label" id="lb-modules"></div>
-    <div class="nav-item active" onclick="switchSection('net',this)">
-      <div class="nav-icon" style="background:rgba(0,212,170,.15);color:var(--accent)">N</div>
-      <span id="nav-net"></span><div class="nav-dot" style="background:var(--accent)"></div>
-    </div>
-    <div class="nav-sub open" id="subnav-net">
-      <div class="nav-sub-item" id="sub-cctv" onclick="askQ('cctv')"></div>
-      <div class="nav-sub-item" id="sub-wifi" onclick="askQ('wifi')"></div>
-      <div class="nav-sub-item" id="sub-isp" onclick="askQ('isp')"></div>
-      <div class="nav-sub-item" id="sub-dns" onclick="askQ('dns')"></div>
-    </div>
-    <div class="nav-item" onclick="switchSection('hw',this)">
-      <div class="nav-icon" style="background:rgba(0,153,255,.15);color:var(--accent2)">H</div>
-      <span id="nav-hw"></span><div class="nav-dot" style="background:var(--accent2)"></div>
-    </div>
-    <div class="nav-sub" id="subnav-hw">
-      <div class="nav-sub-item" id="sub-server" onclick="askQ('server')"></div>
-      <div class="nav-sub-item" id="sub-nas" onclick="askQ('nas')"></div>
-      <div class="nav-sub-item" id="sub-printer" onclick="askQ('printer')"></div>
-      <div class="nav-sub-item" id="sub-rma" onclick="askQ('rma')"></div>
-    </div>
-    <div class="nav-item" onclick="switchSection('sw',this)">
-      <div class="nav-icon" style="background:rgba(255,107,53,.15);color:var(--accent3)">S</div>
-      <span id="nav-sw"></span><div class="nav-dot" style="background:var(--accent3)"></div>
-    </div>
-    <div class="nav-sub" id="subnav-sw">
-      <div class="nav-sub-item" onclick="askQ('ad')">Active Directory</div>
-      <div class="nav-sub-item" onclick="askQ('sql')">SQL Server</div>
-      <div class="nav-sub-item" onclick="askQ('exchange')">Exchange</div>
-      <div class="nav-sub-item" onclick="askQ('office')">Office</div>
-      <div class="nav-sub-item" onclick="askQ('outlook')">Outlook</div>
-    </div>
+    <div id="moduleNav"></div>
   </div>
   <div class="sidebar-divider"></div>
   <div class="sidebar-section" style="padding-bottom:4px">
@@ -313,204 +301,13 @@ body.light .history-item:hover{background:#f0f2f5}
   <div class="content">
     <div class="tree-panel">
       <div class="panel-title" id="tree-title"></div>
-      <div class="tab-row">
-        <button class="tab active" onclick="showTab('net',this)" id="tab-net"></button>
-        <button class="tab" onclick="showTab('hw',this)" id="tab-hw"></button>
-        <button class="tab" onclick="showTab('sw',this)" id="tab-sw"></button>
+      <div class="tree-toolbar" id="treeToolbar">
+        <button class="btn-tool" type="button" onclick="openSectionEditor()">+ Category</button>
+        <button class="btn-tool" type="button" onclick="openItemEditor(activeSectionId)">+ Item</button>
+        <button class="btn-tool btn-danger" type="button" onclick="resetDiagnosticTree()">Reset</button>
       </div>
-
-      <!-- NETWORK -->
-      <div class="tree-section active" id="section-net">
-        <div class="node-root">
-          <div class="node-tag" id="nt-net-tag"></div>
-          <div class="node-title" id="nt-net-title"></div>
-          <div class="node-sub" id="nt-net-sub"></div>
-        </div>
-        <div class="node-grid cols-2">
-          <div>
-            <div class="section-sep" id="sep-no"></div>
-            <div class="node-card" onclick="toggleCard(this)">
-              <div class="node-badge badge-amber" id="n-ip-badge"></div>
-              <div class="nc-title" id="n-ip-title"></div>
-              <div class="nc-sub" id="n-ip-sub"></div>
-              <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-              <div class="node-detail">
-                <div class="detail-group-title" id="n-ip-dtitle"></div>
-                <ul class="step-list" id="n-ip-steps"></ul>
-                <button class="ask-btn" onclick="askQ('local-ip')"><span class="ai"></span> &#8599;</button>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div class="section-sep" id="sep-yes"></div>
-            <div class="node-card" onclick="toggleCard(this)">
-              <div class="node-badge badge-amber">DNS</div>
-              <div class="nc-title" id="n-dns-title"></div>
-              <div class="nc-sub" id="n-dns-sub"></div>
-              <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-              <div class="node-detail">
-                <ul class="step-list" id="n-dns-steps"></ul>
-                <button class="ask-btn" onclick="askQ('dns')"><span class="ai"></span> &#8599;</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="section-sep" id="sep-devices" style="margin-top:18px"></div>
-        <div class="node-grid cols-3">
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-blue">CCTV</div>
-            <div class="nc-title" id="n-cctv-title"></div>
-            <div class="nc-sub">IP Cam / NVR / DVR</div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="cctv-g1"></div><ul class="step-list" id="cctv-s1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="cctv-g2"></div><ul class="step-list" id="cctv-s2"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="cctv-g3"></div><ul class="step-list" id="cctv-s3"></ul></div>
-              <button class="ask-btn" onclick="askQ('cctv')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-blue">Wi-Fi</div>
-            <div class="nc-title" id="n-wifi-title"></div>
-            <div class="nc-sub" id="n-wifi-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <ul class="step-list" id="n-wifi-steps"></ul>
-              <button class="ask-btn" onclick="askQ('wifi')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-red">ISP</div>
-            <div class="nc-title" id="n-isp-title"></div>
-            <div class="nc-sub" id="n-isp-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <ul class="step-list" id="n-isp-steps"></ul>
-              <button class="ask-btn" onclick="askQ('isp')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- HARDWARE -->
-      <div class="tree-section" id="section-hw">
-        <div class="node-root">
-          <div class="node-tag" id="nt-hw-tag"></div>
-          <div class="node-title" id="nt-hw-title"></div>
-          <div class="node-sub" id="nt-hw-sub"></div>
-        </div>
-        <div class="node-grid cols-3">
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-blue" id="hw-server-badge"></div>
-            <div class="nc-title" id="hw-server-title"></div>
-            <div class="nc-sub" id="hw-server-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="hw-sg1"></div><ul class="step-list" id="hw-ss1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="hw-sg2"></div><ul class="step-list" id="hw-ss2"></ul></div>
-              <button class="ask-btn" onclick="askQ('server')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-blue">NAS</div>
-            <div class="nc-title" id="hw-nas-title"></div>
-            <div class="nc-sub" id="hw-nas-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="hw-ng1"></div><ul class="step-list" id="hw-ns1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="hw-ng2"></div><ul class="step-list" id="hw-ns2"></ul></div>
-              <button class="ask-btn" onclick="askQ('nas')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-blue" id="hw-printer-badge"></div>
-            <div class="nc-title" id="hw-printer-title"></div>
-            <div class="nc-sub" id="hw-printer-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="hw-pg1"></div><ul class="step-list" id="hw-ps1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="hw-pg2"></div><ul class="step-list" id="hw-ps2"></ul></div>
-              <button class="ask-btn" onclick="askQ('printer')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-        </div>
-        <div class="section-sep" id="hw-common-sep"></div>
-        <div class="node-grid cols-3">
-          <div class="node-card" onclick="askQ('rma')"><div class="node-badge badge-red" id="hw-rma-badge"></div><div class="nc-title" id="hw-rma-title"></div><div class="nc-sub" id="hw-rma-sub"></div></div>
-          <div class="node-card" onclick="askQ('maintenance')"><div class="node-badge badge-gray" id="hw-maint-badge"></div><div class="nc-title" id="hw-maint-title"></div><div class="nc-sub" id="hw-maint-sub"></div></div>
-          <div class="node-card" onclick="askQ('asset')"><div class="node-badge badge-gray" id="hw-asset-badge"></div><div class="nc-title" id="hw-asset-title"></div><div class="nc-sub" id="hw-asset-sub"></div></div>
-        </div>
-      </div>
-
-      <!-- SOFTWARE -->
-      <div class="tree-section" id="section-sw">
-        <div class="node-root">
-          <div class="node-tag" id="nt-sw-tag"></div>
-          <div class="node-title" id="nt-sw-title"></div>
-          <div class="node-sub" id="nt-sw-sub"></div>
-        </div>
-        <div class="node-grid cols-2">
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-orange">Active Directory</div>
-            <div class="nc-title" id="sw-ad-title"></div><div class="nc-sub" id="sw-ad-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="sw-ad-g1"></div><ul class="step-list" id="sw-ad-s1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="sw-ad-g2"></div><ul class="step-list" id="sw-ad-s2"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="sw-ad-g3"></div><ul class="step-list" id="sw-ad-s3"></ul></div>
-              <button class="ask-btn" onclick="askQ('ad')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-orange">SQL Server</div>
-            <div class="nc-title" id="sw-sql-title"></div><div class="nc-sub" id="sw-sql-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="sw-sql-g1"></div><ul class="step-list" id="sw-sql-s1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="sw-sql-g2"></div><ul class="step-list" id="sw-sql-s2"></ul></div>
-              <button class="ask-btn" onclick="askQ('sql')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-        </div>
-        <div class="node-grid cols-3" style="margin-top:8px">
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-orange">Exchange</div>
-            <div class="nc-title" id="sw-ex-title"></div><div class="nc-sub" id="sw-ex-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="sw-ex-g1"></div><ul class="step-list" id="sw-ex-s1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="sw-ex-g2"></div><ul class="step-list" id="sw-ex-s2"></ul></div>
-              <button class="ask-btn" onclick="askQ('exchange')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-orange">Office</div>
-            <div class="nc-title" id="sw-office-title"></div><div class="nc-sub" id="sw-office-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="sw-off-g1"></div><ul class="step-list" id="sw-off-s1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="sw-off-g2"></div><ul class="step-list" id="sw-off-s2"></ul></div>
-              <button class="ask-btn" onclick="askQ('office')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-          <div class="node-card" onclick="toggleCard(this)">
-            <div class="node-badge badge-orange">Outlook</div>
-            <div class="nc-title" id="sw-outlook-title"></div><div class="nc-sub" id="sw-outlook-sub"></div>
-            <div class="expand-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span class="xp"></span></div>
-            <div class="node-detail">
-              <div class="detail-group"><div class="detail-group-title" id="sw-ol-g1"></div><ul class="step-list" id="sw-ol-s1"></ul></div>
-              <div class="detail-group"><div class="detail-group-title" id="sw-ol-g2"></div><ul class="step-list" id="sw-ol-s2"></ul></div>
-              <button class="ask-btn" onclick="askQ('outlook')"><span class="ai"></span> &#8599;</button>
-            </div>
-          </div>
-        </div>
-        <div class="section-sep" id="sw-resolve-sep"></div>
-        <div class="node-grid cols-3">
-          <div class="node-card" onclick="askQ('eventlog')"><div class="node-badge badge-amber" id="sw-log-badge"></div><div class="nc-title" id="sw-log-title"></div><div class="nc-sub" id="sw-log-sub"></div></div>
-          <div class="node-card" onclick="askQ('escalate')"><div class="node-badge badge-red" id="sw-esc-badge"></div><div class="nc-title" id="sw-esc-title"></div><div class="nc-sub" id="sw-esc-sub"></div></div>
-          <div class="node-card" onclick="askQ('ticket')"><div class="node-badge badge-teal" id="sw-ticket-badge"></div><div class="nc-title" id="sw-ticket-title"></div><div class="nc-sub" id="sw-ticket-sub"></div></div>
-        </div>
-      </div>
+      <div class="tab-row" id="treeTabs"></div>
+      <div id="treeSections"></div>
     </div>
 
     <!-- CHAT -->
@@ -603,6 +400,71 @@ body.light .history-item:hover{background:#f0f2f5}
   </div>
 </div>
 
+<div class="modal-overlay" id="treeEditorOverlay" onclick="if(event.target===this)closeTreeEditor()">
+  <div class="modal" style="width:620px;max-height:92vh;overflow:auto">
+    <div class="modal-title" id="treeEditorTitle">Edit</div>
+    <div class="modal-sub">Changes are saved in this browser.</div>
+    <input type="hidden" id="editKind">
+    <input type="hidden" id="editSectionId">
+    <input type="hidden" id="editItemId">
+
+    <div id="sectionFields">
+      <div class="form-grid">
+        <div>
+          <label class="form-label">Category Name</label>
+          <input class="form-input" id="sectionTitle" type="text">
+        </div>
+        <div>
+          <label class="form-label">Icon Letter</label>
+          <input class="form-input" id="sectionIcon" type="text" maxlength="2">
+        </div>
+      </div>
+      <label class="form-label">Entry Tag</label>
+      <input class="form-input" id="sectionTag" type="text">
+      <label class="form-label">Root Title</label>
+      <input class="form-input" id="sectionRootTitle" type="text">
+      <label class="form-label">Root Subtitle</label>
+      <input class="form-input" id="sectionRootSubtitle" type="text">
+    </div>
+
+    <div id="itemFields">
+      <label class="form-label">Category</label>
+      <select class="form-input" id="itemSection"></select>
+      <div class="form-grid">
+        <div>
+          <label class="form-label">Badge</label>
+          <input class="form-input" id="itemBadge" type="text">
+        </div>
+        <div>
+          <label class="form-label">Badge Color</label>
+          <select class="form-input" id="itemBadgeClass">
+            <option value="badge-teal">Teal</option>
+            <option value="badge-blue">Blue</option>
+            <option value="badge-amber">Amber</option>
+            <option value="badge-orange">Orange</option>
+            <option value="badge-red">Red</option>
+            <option value="badge-gray">Gray</option>
+          </select>
+        </div>
+      </div>
+      <label class="form-label">Item Title</label>
+      <input class="form-input" id="itemTitle" type="text">
+      <label class="form-label">Item Subtitle</label>
+      <input class="form-input" id="itemSubtitle" type="text">
+      <label class="form-label">AI Question</label>
+      <textarea class="form-textarea" id="itemQuestion" style="min-height:70px"></textarea>
+      <label class="form-label">Diagnostic Steps</label>
+      <textarea class="form-textarea" id="itemGroups" placeholder="Group: Basic Checks&#10;Check power and network&#10;Review logs"></textarea>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeTreeEditor()">Cancel</button>
+      <button class="btn-save" onclick="saveTreeEditor()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="data/diagnostic-data.js"></script>
 <script>
 const I = {
   zh:{
@@ -750,6 +612,9 @@ let theme = localStorage.getItem('it_theme') || 'dark';
 let currentProvider = localStorage.getItem('it_provider') || 'claude';
 let chatHistory = [];
 let sessionHistory = loadHistory();
+let diagnosticTree = loadDiagnosticTree();
+let activeSectionId = diagnosticTree[0]?.id || '';
+let editMode = localStorage.getItem('it_edit_mode') === '1';
 let isLoading = false;
 let modalTab = 'claude';
 
@@ -788,6 +653,254 @@ function loadHistory(){
     localStorage.removeItem('it_hist');
     return [];
   }
+}
+function cloneData(value){ return JSON.parse(JSON.stringify(value)); }
+function localized(value){
+  if(value && typeof value === 'object' && !Array.isArray(value)) return value[lang] || value.zh || value.en || '';
+  return value || '';
+}
+function makeLocalized(value){ return { zh:value || '', en:value || '' }; }
+function normalizeLegacyMarkup(value){
+  if(typeof value === 'string'){
+    return value.replace(/<code>([\s\S]*?)<\/code>/gi,'`$1`').replace(/<[^>]+>/g,'');
+  }
+  if(Array.isArray(value)) return value.map(normalizeLegacyMarkup);
+  if(value && typeof value === 'object'){
+    Object.keys(value).forEach(key=>{ value[key]=normalizeLegacyMarkup(value[key]); });
+  }
+  return value;
+}
+function loadDiagnosticTree(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('it_diag_tree') || 'null');
+    if(Array.isArray(saved) && saved.length) return normalizeLegacyMarkup(saved);
+  }catch{
+    localStorage.removeItem('it_diag_tree');
+  }
+  return normalizeLegacyMarkup(cloneData(window.createDefaultDiagnosticTree(I)));
+}
+function saveDiagnosticTree(){
+  localStorage.setItem('it_diag_tree', JSON.stringify(diagnosticTree));
+}
+function sectionById(id){ return diagnosticTree.find(section => section.id === id); }
+function itemById(sectionId,itemId){
+  const section=sectionById(sectionId);
+  return section ? section.items.find(item => item.id === itemId) : null;
+}
+function findQuestionItem(key){
+  for(const section of diagnosticTree){
+    const item=section.items.find(entry => entry.id === key);
+    if(item) return item;
+  }
+  return null;
+}
+function uid(prefix){ return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,6); }
+function syncEditMode(){
+  document.body.classList.toggle('edit-mode', editMode);
+  const btn=document.getElementById('btnEditTree');
+  if(btn){
+    btn.classList.toggle('active', editMode);
+    btn.textContent = editMode ? 'Done' : 'Edit';
+  }
+}
+function toggleEditMode(){
+  editMode=!editMode;
+  localStorage.setItem('it_edit_mode', editMode ? '1' : '0');
+  syncEditMode();
+  renderDiagnosticUI();
+}
+function renderDiagnosticUI(){
+  if(!diagnosticTree.length){
+    diagnosticTree=cloneData(window.createDefaultDiagnosticTree(I));
+    activeSectionId=diagnosticTree[0].id;
+  }
+  if(!sectionById(activeSectionId)) activeSectionId=diagnosticTree[0].id;
+  renderModuleNav();
+  renderTreeTabs();
+  renderTreeSections();
+  syncEditMode();
+}
+function renderModuleNav(){
+  const nav=document.getElementById('moduleNav');
+  if(!nav) return;
+  nav.replaceChildren();
+  diagnosticTree.forEach(section=>{
+    const item=document.createElement('div');
+    item.className='nav-item' + (section.id===activeSectionId ? ' active' : '');
+    item.addEventListener('click',()=>switchSection(section.id));
+    const icon=document.createElement('div');
+    icon.className='nav-icon';
+    icon.style.background=section.iconBg || 'rgba(136,146,164,.15)';
+    icon.style.color=section.accent || 'var(--text2)';
+    icon.textContent=section.icon || localized(section.title).slice(0,1).toUpperCase();
+    const label=document.createElement('span');
+    label.textContent=localized(section.title);
+    const dot=document.createElement('div');
+    dot.className='nav-dot';
+    dot.style.background=section.accent || 'var(--text3)';
+    item.append(icon,label,dot);
+    nav.appendChild(item);
+
+    const sub=document.createElement('div');
+    sub.className='nav-sub' + (section.id===activeSectionId ? ' open' : '');
+    section.items.forEach(entry=>{
+      const subItem=document.createElement('div');
+      subItem.className='nav-sub-item';
+      subItem.textContent=localized(entry.title);
+      subItem.addEventListener('click',event=>{
+        event.stopPropagation();
+        askQ(entry.id);
+      });
+      sub.appendChild(subItem);
+    });
+    nav.appendChild(sub);
+  });
+}
+function renderTreeTabs(){
+  const tabs=document.getElementById('treeTabs');
+  if(!tabs) return;
+  tabs.replaceChildren();
+  diagnosticTree.forEach(section=>{
+    const btn=document.createElement('button');
+    btn.className='tab' + (section.id===activeSectionId ? ' active' : '');
+    btn.type='button';
+    btn.textContent=localized(section.title);
+    btn.addEventListener('click',()=>switchSection(section.id));
+    tabs.appendChild(btn);
+  });
+}
+function renderTreeSections(){
+  const wrap=document.getElementById('treeSections');
+  if(!wrap) return;
+  wrap.replaceChildren();
+  diagnosticTree.forEach(section=>{
+    const pane=document.createElement('div');
+    pane.className='tree-section' + (section.id===activeSectionId ? ' active' : '');
+    pane.id='section-'+section.id;
+    pane.appendChild(renderSectionRoot(section));
+    const grid=document.createElement('div');
+    grid.className='node-grid ' + (section.items.length <= 2 ? 'cols-2' : 'cols-3');
+    section.items.forEach(entry=>grid.appendChild(renderItemCard(section, entry)));
+    pane.appendChild(grid);
+    wrap.appendChild(pane);
+  });
+}
+function renderSectionRoot(section){
+  const root=document.createElement('div');
+  root.className='node-root';
+  root.style.borderLeftColor=section.accent || 'var(--accent)';
+  const head=document.createElement('div');
+  head.className='node-root-head';
+  const main=document.createElement('div');
+  main.className='node-root-main';
+  const tag=document.createElement('div');
+  tag.className='node-tag';
+  tag.textContent=localized(section.tag);
+  const title=document.createElement('div');
+  title.className='node-title';
+  title.textContent=localized(section.rootTitle);
+  const sub=document.createElement('div');
+  sub.className='node-sub';
+  sub.textContent=localized(section.rootSubtitle);
+  main.append(tag,title,sub);
+  head.appendChild(main);
+  const actions=document.createElement('div');
+  actions.className='edit-actions';
+  actions.append(
+    makeIconButton('Edit category','E',()=>openSectionEditor(section.id)),
+    makeIconButton('Delete category','X',()=>deleteSection(section.id),'danger')
+  );
+  head.appendChild(actions);
+  root.appendChild(head);
+  return root;
+}
+function renderItemCard(section,entry){
+  const card=document.createElement('div');
+  card.className='node-card';
+  card.addEventListener('click',()=> entry.groups.length ? toggleCard(card) : askQ(entry.id));
+  const head=document.createElement('div');
+  head.className='node-card-head';
+  const main=document.createElement('div');
+  main.className='node-card-main';
+  const badge=document.createElement('div');
+  badge.className='node-badge ' + (entry.badgeClass || 'badge-blue');
+  badge.textContent=localized(entry.badge);
+  const title=document.createElement('div');
+  title.className='nc-title';
+  title.textContent=localized(entry.title);
+  const sub=document.createElement('div');
+  sub.className='nc-sub';
+  sub.textContent=localized(entry.subtitle);
+  main.append(badge,title,sub);
+  head.appendChild(main);
+  const actions=document.createElement('div');
+  actions.className='edit-actions';
+  actions.addEventListener('click',event=>event.stopPropagation());
+  actions.append(
+    makeIconButton('Edit item','E',()=>openItemEditor(section.id,entry.id)),
+    makeIconButton('Delete item','X',()=>deleteItem(section.id,entry.id),'danger')
+  );
+  head.appendChild(actions);
+  card.appendChild(head);
+  if(entry.groups.length){
+    const toggle=document.createElement('div');
+    toggle.className='expand-toggle';
+    toggle.innerHTML='<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg><span></span>';
+    toggle.querySelector('span').textContent=L().xp;
+    const detail=document.createElement('div');
+    detail.className='node-detail';
+    entry.groups.forEach(group=>{
+      const groupEl=document.createElement('div');
+      groupEl.className='detail-group';
+      const groupTitle=document.createElement('div');
+      groupTitle.className='detail-group-title';
+      groupTitle.textContent=localized(group.title);
+      const list=document.createElement('ul');
+      list.className='step-list';
+      (localized(group.steps) || []).forEach(step=>{
+        const li=document.createElement('li');
+        li.innerHTML=fmtInline(step);
+        list.appendChild(li);
+      });
+      groupEl.append(groupTitle,list);
+      detail.appendChild(groupEl);
+    });
+    detail.appendChild(makeAskButton(entry.id));
+    card.append(toggle,detail);
+  }
+  return card;
+}
+function makeAskButton(key){
+  const btn=document.createElement('button');
+  btn.className='ask-btn';
+  btn.type='button';
+  btn.innerHTML='<span></span> &#8599;';
+  btn.querySelector('span').textContent=L().ai;
+  btn.addEventListener('click',event=>{
+    event.stopPropagation();
+    askQ(key);
+  });
+  return btn;
+}
+function makeIconButton(title,label,onClick,extraClass=''){
+  const btn=document.createElement('button');
+  btn.className='icon-btn ' + extraClass;
+  btn.type='button';
+  btn.title=title;
+  btn.textContent=label;
+  btn.addEventListener('click',event=>{
+    event.stopPropagation();
+    onClick();
+  });
+  return btn;
+}
+function fmtInline(value){
+  return escapeHtml(value).replace(/`([^`]+)`/g,'<code>$1</code>');
+}
+function switchSection(id){
+  activeSectionId=id;
+  renderDiagnosticUI();
+  closeSidebar();
 }
 
 function applyLang(){
@@ -868,6 +981,7 @@ function applyLang(){
   $t('modal-label',T.modalLabel); $h('modal-note',T.modalNote);
   $t('modal-cancel',T.modalCancel); $t('modal-save',T.modalSave);
   renderHistory();
+  renderDiagnosticUI();
 }
 
 function toggleLang(){
@@ -876,35 +990,25 @@ function toggleLang(){
   applyLang();
 }
 
-function showTab(id,btn){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tree-section').forEach(s=>s.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('section-'+id).classList.add('active');
-}
-
-function switchSection(id,el){
-  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
-  document.querySelectorAll('.nav-sub').forEach(s=>s.classList.remove('open'));
-  el.classList.add('active');
-  document.getElementById('subnav-'+id).classList.add('open');
-  const tabs=document.querySelectorAll('.tab');
-  document.querySelectorAll('.tree-section').forEach(s=>s.classList.remove('active'));
-  tabs.forEach(t=>t.classList.remove('active'));
-  const idx=['net','hw','sw'].indexOf(id);
-  if(tabs[idx]) tabs[idx].classList.add('active');
-  const sec=document.getElementById('section-'+id);
-  if(sec) sec.classList.add('active');
-}
+function showTab(id){ switchSection(id); }
 
 function toggleCard(card){ card.classList.toggle('expanded'); }
 function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
 function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function hasActiveProvider(){
+  const p=providers[currentProvider];
+  return currentProvider === 'ollama' || !!(p && p.key);
+}
 
 function askQ(key){
-  const q=L().q[key]; if(!q) return;
+  const item=findQuestionItem(key);
+  const q=(L().q && L().q[key]) || (item ? localized(item.question) : '');
+  if(!q) return;
   const ci=document.getElementById('chatInput');
-  ci.value=q; autoResize(ci); sendMessage();
+  ci.value=q;
+  autoResize(ci);
+  ci.focus();
+  if(hasActiveProvider()) sendMessage();
 }
 
 function updateStatus(){
@@ -985,8 +1089,7 @@ function removeTyping(){ const t=document.getElementById('typingMsg'); if(t) t.r
 async function sendMessage(){
   const input=document.getElementById('chatInput');
   const text=input.value.trim(); if(!text||isLoading) return;
-  const p = providers[currentProvider];
-  if(currentProvider !== 'ollama' && !p.key){ openModal(); return; }
+  if(!hasActiveProvider()){ openModal(); return; }
   isLoading=true; document.getElementById('sendBtn').disabled=true;
   input.value=''; input.style.height='auto';
   addMessage('user',text); chatHistory.push({role:'user',content:text}); addTyping();
@@ -1039,9 +1142,177 @@ function renderHistory(){
   });
 }
 
+function populateSectionSelect(selectedId){
+  const select=document.getElementById('itemSection');
+  select.replaceChildren();
+  diagnosticTree.forEach(section=>{
+    const opt=document.createElement('option');
+    opt.value=section.id;
+    opt.textContent=localized(section.title);
+    opt.selected=section.id===selectedId;
+    select.appendChild(opt);
+  });
+}
+function openSectionEditor(sectionId=''){
+  const section=sectionId ? sectionById(sectionId) : null;
+  document.getElementById('editKind').value='section';
+  document.getElementById('editSectionId').value=sectionId;
+  document.getElementById('editItemId').value='';
+  document.getElementById('treeEditorTitle').textContent=section ? 'Edit category' : 'Add category';
+  document.getElementById('sectionFields').style.display='block';
+  document.getElementById('itemFields').style.display='none';
+  document.getElementById('sectionTitle').value=section ? localized(section.title) : '';
+  document.getElementById('sectionIcon').value=section ? section.icon : '';
+  document.getElementById('sectionTag').value=section ? localized(section.tag) : 'ENTRY //';
+  document.getElementById('sectionRootTitle').value=section ? localized(section.rootTitle) : '';
+  document.getElementById('sectionRootSubtitle').value=section ? localized(section.rootSubtitle) : '';
+  document.getElementById('treeEditorOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('sectionTitle').focus(),50);
+}
+function openItemEditor(sectionId='',itemId=''){
+  const section=sectionById(sectionId) || diagnosticTree[0];
+  const entry=itemId ? itemById(section.id,itemId) : null;
+  document.getElementById('editKind').value='item';
+  document.getElementById('editSectionId').value=section.id;
+  document.getElementById('editItemId').value=itemId;
+  document.getElementById('treeEditorTitle').textContent=entry ? 'Edit item' : 'Add item';
+  document.getElementById('sectionFields').style.display='none';
+  document.getElementById('itemFields').style.display='block';
+  populateSectionSelect(section.id);
+  document.getElementById('itemBadge').value=entry ? localized(entry.badge) : '';
+  document.getElementById('itemBadgeClass').value=entry ? entry.badgeClass : 'badge-blue';
+  document.getElementById('itemTitle').value=entry ? localized(entry.title) : '';
+  document.getElementById('itemSubtitle').value=entry ? localized(entry.subtitle) : '';
+  document.getElementById('itemQuestion').value=entry ? localized(entry.question) : '';
+  document.getElementById('itemGroups').value=entry ? serializeGroups(entry.groups) : 'Group: Basic Checks\n';
+  document.getElementById('treeEditorOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('itemTitle').focus(),50);
+}
+function closeTreeEditor(){ document.getElementById('treeEditorOverlay').classList.remove('open'); }
+function saveTreeEditor(){
+  const kind=document.getElementById('editKind').value;
+  if(kind==='section') saveSectionEditor();
+  if(kind==='item') saveItemEditor();
+}
+function saveSectionEditor(){
+  const sectionId=document.getElementById('editSectionId').value;
+  const title=document.getElementById('sectionTitle').value.trim();
+  if(!title) return;
+  const payload={
+    title:makeLocalized(title),
+    icon:document.getElementById('sectionIcon').value.trim().slice(0,2) || title.slice(0,1).toUpperCase(),
+    tag:makeLocalized(document.getElementById('sectionTag').value.trim()),
+    rootTitle:makeLocalized(document.getElementById('sectionRootTitle').value.trim() || title),
+    rootSubtitle:makeLocalized(document.getElementById('sectionRootSubtitle').value.trim()),
+  };
+  if(sectionId){
+    const section=sectionById(sectionId);
+    Object.assign(section,payload);
+  }else{
+    const section={
+      id:uid('section'),
+      iconBg:'rgba(136,146,164,.15)',
+      accent:'var(--accent)',
+      items:[],
+      ...payload
+    };
+    diagnosticTree.push(section);
+    activeSectionId=section.id;
+  }
+  saveDiagnosticTree();
+  closeTreeEditor();
+  renderDiagnosticUI();
+}
+function saveItemEditor(){
+  const oldSectionId=document.getElementById('editSectionId').value;
+  const itemId=document.getElementById('editItemId').value;
+  const newSectionId=document.getElementById('itemSection').value;
+  const title=document.getElementById('itemTitle').value.trim();
+  if(!title) return;
+  const payload={
+    badge:makeLocalized(document.getElementById('itemBadge').value.trim() || title.slice(0,8)),
+    badgeClass:document.getElementById('itemBadgeClass').value,
+    title:makeLocalized(title),
+    subtitle:makeLocalized(document.getElementById('itemSubtitle').value.trim()),
+    question:makeLocalized(document.getElementById('itemQuestion').value.trim()),
+    groups:parseGroups(document.getElementById('itemGroups').value)
+  };
+  const target=sectionById(newSectionId);
+  if(!target) return;
+  if(itemId){
+    const oldSection=sectionById(oldSectionId);
+    const existing=itemById(oldSectionId,itemId);
+    Object.assign(existing,payload);
+    if(oldSectionId!==newSectionId){
+      oldSection.items=oldSection.items.filter(item=>item.id!==itemId);
+      target.items.push(existing);
+    }
+  }else{
+    target.items.push({ id:uid('item'), ...payload });
+  }
+  activeSectionId=newSectionId;
+  saveDiagnosticTree();
+  closeTreeEditor();
+  renderDiagnosticUI();
+}
+function deleteSection(sectionId){
+  const section=sectionById(sectionId);
+  if(!section) return;
+  if(!confirm('Delete category "'+localized(section.title)+'"?')) return;
+  diagnosticTree=diagnosticTree.filter(entry=>entry.id!==sectionId);
+  activeSectionId=diagnosticTree[0]?.id || '';
+  saveDiagnosticTree();
+  renderDiagnosticUI();
+}
+function deleteItem(sectionId,itemId){
+  const section=sectionById(sectionId);
+  const entry=itemById(sectionId,itemId);
+  if(!section || !entry) return;
+  if(!confirm('Delete item "'+localized(entry.title)+'"?')) return;
+  section.items=section.items.filter(item=>item.id!==itemId);
+  saveDiagnosticTree();
+  renderDiagnosticUI();
+}
+function resetDiagnosticTree(){
+  if(!confirm('Reset all categories and items to the default data?')) return;
+  localStorage.removeItem('it_diag_tree');
+  diagnosticTree=cloneData(window.createDefaultDiagnosticTree(I));
+  activeSectionId=diagnosticTree[0]?.id || '';
+  renderDiagnosticUI();
+}
+function serializeGroups(groups){
+  return (groups || []).map(group=>{
+    const lines=['Group: '+localized(group.title)];
+    (localized(group.steps) || []).forEach(step=>lines.push(step));
+    return lines.join('\n');
+  }).join('\n\n');
+}
+function parseGroups(value){
+  const groups=[];
+  let current=null;
+  value.split(/\r?\n/).forEach(raw=>{
+    const line=raw.trim();
+    if(!line) return;
+    if(/^group\s*:/i.test(line)){
+      current={title:makeLocalized(line.replace(/^group\s*:/i,'').trim() || 'Steps'),steps:{zh:[],en:[]}};
+      groups.push(current);
+      return;
+    }
+    if(!current){
+      current={title:makeLocalized('Steps'),steps:{zh:[],en:[]}};
+      groups.push(current);
+    }
+    const step=line.replace(/^[-*]\s*/,'');
+    current.steps.zh.push(step);
+    current.steps.en.push(step);
+  });
+  return groups;
+}
+
 applyLang();
 applyTheme();
 updateStatus();
+renderDiagnosticUI();
 
 function toggleSidebar(){
   document.getElementById('sidebarOverlay').classList.toggle('open');
