@@ -280,7 +280,7 @@ body.light .history-item:hover{background:#f0f2f5}
     <button class="btn-topbar btn-lang" onclick="toggleLang()">
       <span>&#127760;</span><span id="langLabel"></span>
     </button>
-    <button class="btn-topbar" onclick="toggleEditMode()" id="btnEditTree">Edit</button>
+    <button class="btn-topbar" onclick="toggleEditMode()" id="btnEditTree"></button>
     <button class="btn-topbar" onclick="openModal()" id="btnApiKey"></button>
   </div>
 </header>
@@ -302,9 +302,13 @@ body.light .history-item:hover{background:#f0f2f5}
     <div class="tree-panel">
       <div class="panel-title" id="tree-title"></div>
       <div class="tree-toolbar" id="treeToolbar">
-        <button class="btn-tool" type="button" onclick="openSectionEditor()">+ Category</button>
-        <button class="btn-tool" type="button" onclick="openItemEditor(activeSectionId)">+ Item</button>
-        <button class="btn-tool btn-danger" type="button" onclick="resetDiagnosticTree()">Reset</button>
+        <button class="btn-tool" type="button" onclick="openSectionEditor()" id="btnAddCategory"></button>
+        <button class="btn-tool" type="button" onclick="openItemEditor(activeSectionId)" id="btnAddItem"></button>
+        <button class="btn-tool" type="button" onclick="exportDiagnosticTree()" id="btnExportJson"></button>
+        <button class="btn-tool" type="button" onclick="exportDefaultModule()" id="btnExportModule"></button>
+        <button class="btn-tool" type="button" onclick="document.getElementById('treeImportFile').click()" id="btnImportJson"></button>
+        <button class="btn-tool btn-danger" type="button" onclick="resetDiagnosticTree()" id="btnResetTree"></button>
+        <input id="treeImportFile" type="file" accept="application/json,.json" style="display:none" onchange="importDiagnosticTree(event)">
       </div>
       <div class="tab-row" id="treeTabs"></div>
       <div id="treeSections"></div>
@@ -402,8 +406,8 @@ body.light .history-item:hover{background:#f0f2f5}
 
 <div class="modal-overlay" id="treeEditorOverlay" onclick="if(event.target===this)closeTreeEditor()">
   <div class="modal" style="width:620px;max-height:92vh;overflow:auto">
-    <div class="modal-title" id="treeEditorTitle">Edit</div>
-    <div class="modal-sub">Changes are saved in this browser.</div>
+    <div class="modal-title" id="treeEditorTitle"></div>
+    <div class="modal-sub" id="treeEditorSub"></div>
     <input type="hidden" id="editKind">
     <input type="hidden" id="editSectionId">
     <input type="hidden" id="editItemId">
@@ -411,55 +415,55 @@ body.light .history-item:hover{background:#f0f2f5}
     <div id="sectionFields">
       <div class="form-grid">
         <div>
-          <label class="form-label">Category Name</label>
+          <label class="form-label" id="lblSectionTitle"></label>
           <input class="form-input" id="sectionTitle" type="text">
         </div>
         <div>
-          <label class="form-label">Icon Letter</label>
+          <label class="form-label" id="lblSectionIcon"></label>
           <input class="form-input" id="sectionIcon" type="text" maxlength="2">
         </div>
       </div>
-      <label class="form-label">Entry Tag</label>
+      <label class="form-label" id="lblSectionTag"></label>
       <input class="form-input" id="sectionTag" type="text">
-      <label class="form-label">Root Title</label>
+      <label class="form-label" id="lblSectionRootTitle"></label>
       <input class="form-input" id="sectionRootTitle" type="text">
-      <label class="form-label">Root Subtitle</label>
+      <label class="form-label" id="lblSectionRootSubtitle"></label>
       <input class="form-input" id="sectionRootSubtitle" type="text">
     </div>
 
     <div id="itemFields">
-      <label class="form-label">Category</label>
+      <label class="form-label" id="lblItemSection"></label>
       <select class="form-input" id="itemSection"></select>
       <div class="form-grid">
         <div>
-          <label class="form-label">Badge</label>
+          <label class="form-label" id="lblItemBadge"></label>
           <input class="form-input" id="itemBadge" type="text">
         </div>
         <div>
-          <label class="form-label">Badge Color</label>
+          <label class="form-label" id="lblItemBadgeClass"></label>
           <select class="form-input" id="itemBadgeClass">
-            <option value="badge-teal">Teal</option>
-            <option value="badge-blue">Blue</option>
-            <option value="badge-amber">Amber</option>
-            <option value="badge-orange">Orange</option>
-            <option value="badge-red">Red</option>
-            <option value="badge-gray">Gray</option>
+            <option value="badge-teal" data-color="teal"></option>
+            <option value="badge-blue" data-color="blue"></option>
+            <option value="badge-amber" data-color="amber"></option>
+            <option value="badge-orange" data-color="orange"></option>
+            <option value="badge-red" data-color="red"></option>
+            <option value="badge-gray" data-color="gray"></option>
           </select>
         </div>
       </div>
-      <label class="form-label">Item Title</label>
+      <label class="form-label" id="lblItemTitle"></label>
       <input class="form-input" id="itemTitle" type="text">
-      <label class="form-label">Item Subtitle</label>
+      <label class="form-label" id="lblItemSubtitle"></label>
       <input class="form-input" id="itemSubtitle" type="text">
-      <label class="form-label">AI Question</label>
+      <label class="form-label" id="lblItemQuestion"></label>
       <textarea class="form-textarea" id="itemQuestion" style="min-height:70px"></textarea>
-      <label class="form-label">Diagnostic Steps</label>
-      <textarea class="form-textarea" id="itemGroups" placeholder="Group: Basic Checks&#10;Check power and network&#10;Review logs"></textarea>
+      <label class="form-label" id="lblItemGroups"></label>
+      <textarea class="form-textarea" id="itemGroups"></textarea>
     </div>
 
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeTreeEditor()">Cancel</button>
-      <button class="btn-save" onclick="saveTreeEditor()">Save</button>
+      <button class="btn-cancel" onclick="closeTreeEditor()" id="btnTreeCancel"></button>
+      <button class="btn-save" onclick="saveTreeEditor()" id="btnTreeSave"></button>
     </div>
   </div>
 </div>
@@ -612,6 +616,8 @@ let theme = localStorage.getItem('it_theme') || 'dark';
 let currentProvider = localStorage.getItem('it_provider') || 'claude';
 let chatHistory = [];
 let sessionHistory = loadHistory();
+const DIAG_TREE_STORAGE_KEY = 'it_diag_tree';
+const DIAG_DATA_VERSION = window.IT_DIAGNOSTIC_DATA_VERSION || 'dev';
 let diagnosticTree = loadDiagnosticTree();
 let activeSectionId = diagnosticTree[0]?.id || '';
 let editMode = localStorage.getItem('it_edit_mode') === '1';
@@ -660,6 +666,139 @@ function localized(value){
   return value || '';
 }
 function makeLocalized(value){ return { zh:value || '', en:value || '' }; }
+const EDITOR_I18N = {
+  zh:{
+    edit:'編輯',
+    done:'完成',
+    addCategory:'+ 分類',
+    addItem:'+ 項目',
+    exportJson:'匯出 JSON',
+    exportModule:'匯出預設 JS',
+    importJson:'匯入 JSON',
+    reset:'重設',
+    editorSub:'變更會儲存在此瀏覽器。',
+    categoryName:'分類名稱',
+    iconLetter:'圖示字母',
+    entryTag:'入口標籤',
+    rootTitle:'分類標題',
+    rootSubtitle:'分類描述',
+    category:'分類',
+    badge:'標籤',
+    badgeColor:'標籤顏色',
+    itemTitle:'項目標題',
+    itemSubtitle:'項目描述',
+    aiQuestion:'AI 問題',
+    diagnosticSteps:'診斷步驟',
+    cancel:'取消',
+    save:'儲存',
+    editCategory:'修改分類',
+    addCategoryTitle:'新增分類',
+    editItem:'修改項目',
+    addItemTitle:'新增項目',
+    deleteCategory:'刪除分類',
+    deleteItem:'刪除項目',
+    confirmDeleteCategory:title=>'確定刪除分類「'+title+'」？',
+    confirmDeleteItem:title=>'確定刪除項目「'+title+'」？',
+    confirmReset:'確定要將所有分類與項目重設為發布版預設資料？',
+    importComplete:'匯入完成。此瀏覽器已套用匯入的診斷樹。',
+    importFailed:msg=>'匯入失敗：'+msg,
+    invalidFile:'診斷樹檔案格式不正確',
+    defaultGroup:'基本檢查',
+    defaultGroupPrefix:'群組：',
+    fallbackGroup:'步驟',
+    groupPlaceholder:'群組：基本檢查\n確認電源與網路\n檢查相關日誌',
+    versionPrompt:'請輸入要寫入 data/diagnostic-data.js 的資料版本：',
+    moduleExported:'已匯出可覆蓋 data/diagnostic-data.js 的預設資料模組。',
+    colors:{teal:'青綠',blue:'藍色',amber:'琥珀',orange:'橘色',red:'紅色',gray:'灰色'}
+  },
+  en:{
+    edit:'Edit',
+    done:'Done',
+    addCategory:'+ Category',
+    addItem:'+ Item',
+    exportJson:'Export JSON',
+    exportModule:'Export Default JS',
+    importJson:'Import JSON',
+    reset:'Reset',
+    editorSub:'Changes are saved in this browser.',
+    categoryName:'Category Name',
+    iconLetter:'Icon Letter',
+    entryTag:'Entry Tag',
+    rootTitle:'Root Title',
+    rootSubtitle:'Root Subtitle',
+    category:'Category',
+    badge:'Badge',
+    badgeColor:'Badge Color',
+    itemTitle:'Item Title',
+    itemSubtitle:'Item Subtitle',
+    aiQuestion:'AI Question',
+    diagnosticSteps:'Diagnostic Steps',
+    cancel:'Cancel',
+    save:'Save',
+    editCategory:'Edit category',
+    addCategoryTitle:'Add category',
+    editItem:'Edit item',
+    addItemTitle:'Add item',
+    deleteCategory:'Delete category',
+    deleteItem:'Delete item',
+    confirmDeleteCategory:title=>'Delete category "'+title+'"?',
+    confirmDeleteItem:title=>'Delete item "'+title+'"?',
+    confirmReset:'Reset all categories and items to the published default data?',
+    importComplete:'Import complete. This browser is now using the imported diagnostic tree.',
+    importFailed:msg=>'Import failed: '+msg,
+    invalidFile:'Invalid diagnostic tree file',
+    defaultGroup:'Basic Checks',
+    defaultGroupPrefix:'Group: ',
+    fallbackGroup:'Steps',
+    groupPlaceholder:'Group: Basic Checks\nCheck power and network\nReview logs',
+    versionPrompt:'Enter the data version for data/diagnostic-data.js:',
+    moduleExported:'Exported a default data module that can replace data/diagnostic-data.js.',
+    colors:{teal:'Teal',blue:'Blue',amber:'Amber',orange:'Orange',red:'Red',gray:'Gray'}
+  }
+};
+function E(){ return EDITOR_I18N[lang] || EDITOR_I18N.en; }
+function applyEditorLang(){
+  const e=E();
+  $t('btnAddCategory',e.addCategory);
+  $t('btnAddItem',e.addItem);
+  $t('btnExportJson',e.exportJson);
+  $t('btnExportModule',e.exportModule);
+  $t('btnImportJson',e.importJson);
+  $t('btnResetTree',e.reset);
+  $t('treeEditorSub',e.editorSub);
+  $t('lblSectionTitle',e.categoryName);
+  $t('lblSectionIcon',e.iconLetter);
+  $t('lblSectionTag',e.entryTag);
+  $t('lblSectionRootTitle',e.rootTitle);
+  $t('lblSectionRootSubtitle',e.rootSubtitle);
+  $t('lblItemSection',e.category);
+  $t('lblItemBadge',e.badge);
+  $t('lblItemBadgeClass',e.badgeColor);
+  $t('lblItemTitle',e.itemTitle);
+  $t('lblItemSubtitle',e.itemSubtitle);
+  $t('lblItemQuestion',e.aiQuestion);
+  $t('lblItemGroups',e.diagnosticSteps);
+  $t('btnTreeCancel',e.cancel);
+  $t('btnTreeSave',e.save);
+  const groupBox=document.getElementById('itemGroups');
+  if(groupBox) groupBox.placeholder=e.groupPlaceholder;
+  document.querySelectorAll('#itemBadgeClass option').forEach(option=>{
+    option.textContent=e.colors[option.dataset.color] || option.dataset.color || option.value;
+  });
+  updateTreeEditorTitle();
+  syncEditMode();
+}
+function updateTreeEditorTitle(){
+  const title=document.getElementById('treeEditorTitle');
+  const kind=document.getElementById('editKind')?.value;
+  if(!title || !kind) return;
+  if(kind==='section'){
+    title.textContent=document.getElementById('editSectionId').value ? E().editCategory : E().addCategoryTitle;
+  }
+  if(kind==='item'){
+    title.textContent=document.getElementById('editItemId').value ? E().editItem : E().addItemTitle;
+  }
+}
 function normalizeLegacyMarkup(value){
   if(typeof value === 'string'){
     return value.replace(/<code>([\s\S]*?)<\/code>/gi,'`$1`').replace(/<[^>]+>/g,'');
@@ -672,15 +811,22 @@ function normalizeLegacyMarkup(value){
 }
 function loadDiagnosticTree(){
   try{
-    const saved = JSON.parse(localStorage.getItem('it_diag_tree') || 'null');
-    if(Array.isArray(saved) && saved.length) return normalizeLegacyMarkup(saved);
+    const saved = JSON.parse(localStorage.getItem(DIAG_TREE_STORAGE_KEY) || 'null');
+    if(saved && saved.version === DIAG_DATA_VERSION && Array.isArray(saved.tree) && saved.tree.length){
+      return normalizeLegacyMarkup(saved.tree);
+    }
+    if(saved) localStorage.removeItem(DIAG_TREE_STORAGE_KEY);
   }catch{
-    localStorage.removeItem('it_diag_tree');
+    localStorage.removeItem(DIAG_TREE_STORAGE_KEY);
   }
   return normalizeLegacyMarkup(cloneData(window.createDefaultDiagnosticTree(I)));
 }
 function saveDiagnosticTree(){
-  localStorage.setItem('it_diag_tree', JSON.stringify(diagnosticTree));
+  localStorage.setItem(DIAG_TREE_STORAGE_KEY, JSON.stringify({
+    version: DIAG_DATA_VERSION,
+    updatedAt: new Date().toISOString(),
+    tree: diagnosticTree
+  }));
 }
 function sectionById(id){ return diagnosticTree.find(section => section.id === id); }
 function itemById(sectionId,itemId){
@@ -700,7 +846,7 @@ function syncEditMode(){
   const btn=document.getElementById('btnEditTree');
   if(btn){
     btn.classList.toggle('active', editMode);
-    btn.textContent = editMode ? 'Done' : 'Edit';
+    btn.textContent = editMode ? E().done : E().edit;
   }
 }
 function toggleEditMode(){
@@ -807,8 +953,8 @@ function renderSectionRoot(section){
   const actions=document.createElement('div');
   actions.className='edit-actions';
   actions.append(
-    makeIconButton('Edit category','E',()=>openSectionEditor(section.id)),
-    makeIconButton('Delete category','X',()=>deleteSection(section.id),'danger')
+    makeIconButton(E().editCategory,'E',()=>openSectionEditor(section.id)),
+    makeIconButton(E().deleteCategory,'X',()=>deleteSection(section.id),'danger')
   );
   head.appendChild(actions);
   root.appendChild(head);
@@ -837,8 +983,8 @@ function renderItemCard(section,entry){
   actions.className='edit-actions';
   actions.addEventListener('click',event=>event.stopPropagation());
   actions.append(
-    makeIconButton('Edit item','E',()=>openItemEditor(section.id,entry.id)),
-    makeIconButton('Delete item','X',()=>deleteItem(section.id,entry.id),'danger')
+    makeIconButton(E().editItem,'E',()=>openItemEditor(section.id,entry.id)),
+    makeIconButton(E().deleteItem,'X',()=>deleteItem(section.id,entry.id),'danger')
   );
   head.appendChild(actions);
   card.appendChild(head);
@@ -980,6 +1126,7 @@ function applyLang(){
   $t('modal-title',T.modalTitle); $t('modal-sub',T.modalSub);
   $t('modal-label',T.modalLabel); $h('modal-note',T.modalNote);
   $t('modal-cancel',T.modalCancel); $t('modal-save',T.modalSave);
+  applyEditorLang();
   renderHistory();
   renderDiagnosticUI();
 }
@@ -1158,7 +1305,7 @@ function openSectionEditor(sectionId=''){
   document.getElementById('editKind').value='section';
   document.getElementById('editSectionId').value=sectionId;
   document.getElementById('editItemId').value='';
-  document.getElementById('treeEditorTitle').textContent=section ? 'Edit category' : 'Add category';
+  document.getElementById('treeEditorTitle').textContent=section ? E().editCategory : E().addCategoryTitle;
   document.getElementById('sectionFields').style.display='block';
   document.getElementById('itemFields').style.display='none';
   document.getElementById('sectionTitle').value=section ? localized(section.title) : '';
@@ -1175,7 +1322,7 @@ function openItemEditor(sectionId='',itemId=''){
   document.getElementById('editKind').value='item';
   document.getElementById('editSectionId').value=section.id;
   document.getElementById('editItemId').value=itemId;
-  document.getElementById('treeEditorTitle').textContent=entry ? 'Edit item' : 'Add item';
+  document.getElementById('treeEditorTitle').textContent=entry ? E().editItem : E().addItemTitle;
   document.getElementById('sectionFields').style.display='none';
   document.getElementById('itemFields').style.display='block';
   populateSectionSelect(section.id);
@@ -1184,7 +1331,7 @@ function openItemEditor(sectionId='',itemId=''){
   document.getElementById('itemTitle').value=entry ? localized(entry.title) : '';
   document.getElementById('itemSubtitle').value=entry ? localized(entry.subtitle) : '';
   document.getElementById('itemQuestion').value=entry ? localized(entry.question) : '';
-  document.getElementById('itemGroups').value=entry ? serializeGroups(entry.groups) : 'Group: Basic Checks\n';
+  document.getElementById('itemGroups').value=entry ? serializeGroups(entry.groups) : E().defaultGroupPrefix + E().defaultGroup + '\n';
   document.getElementById('treeEditorOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('itemTitle').focus(),50);
 }
@@ -1258,7 +1405,7 @@ function saveItemEditor(){
 function deleteSection(sectionId){
   const section=sectionById(sectionId);
   if(!section) return;
-  if(!confirm('Delete category "'+localized(section.title)+'"?')) return;
+  if(!confirm(E().confirmDeleteCategory(localized(section.title)))) return;
   diagnosticTree=diagnosticTree.filter(entry=>entry.id!==sectionId);
   activeSectionId=diagnosticTree[0]?.id || '';
   saveDiagnosticTree();
@@ -1268,21 +1415,84 @@ function deleteItem(sectionId,itemId){
   const section=sectionById(sectionId);
   const entry=itemById(sectionId,itemId);
   if(!section || !entry) return;
-  if(!confirm('Delete item "'+localized(entry.title)+'"?')) return;
+  if(!confirm(E().confirmDeleteItem(localized(entry.title)))) return;
   section.items=section.items.filter(item=>item.id!==itemId);
   saveDiagnosticTree();
   renderDiagnosticUI();
 }
 function resetDiagnosticTree(){
-  if(!confirm('Reset all categories and items to the default data?')) return;
-  localStorage.removeItem('it_diag_tree');
-  diagnosticTree=cloneData(window.createDefaultDiagnosticTree(I));
+  if(!confirm(E().confirmReset)) return;
+  localStorage.removeItem(DIAG_TREE_STORAGE_KEY);
+  diagnosticTree=normalizeLegacyMarkup(cloneData(window.createDefaultDiagnosticTree(I)));
   activeSectionId=diagnosticTree[0]?.id || '';
   renderDiagnosticUI();
 }
+function exportDiagnosticTree(){
+  const payload={
+    app:'it-diagnostic-agent',
+    version:DIAG_DATA_VERSION,
+    exportedAt:new Date().toISOString(),
+    tree:diagnosticTree
+  };
+  downloadText('it-diagnostic-tree-'+DIAG_DATA_VERSION+'.json',JSON.stringify(payload,null,2),'application/json');
+}
+function downloadText(filename,content,type){
+  const blob=new Blob([content],{type:type || 'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+function cleanDataVersion(value){
+  return String(value || '').trim().replace(/[^A-Za-z0-9._-]/g,'-') || DIAG_DATA_VERSION;
+}
+function stringifyForModule(value){
+  return JSON.stringify(value,null,2).replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+}
+function exportDefaultModule(){
+  const rawVersion=prompt(E().versionPrompt,DIAG_DATA_VERSION);
+  if(rawVersion===null) return;
+  const version=cleanDataVersion(rawVersion);
+  const tree=normalizeLegacyMarkup(cloneData(diagnosticTree));
+  const content=[
+    "window.IT_DIAGNOSTIC_DATA_VERSION = '"+version+"';",
+    '',
+    'window.createDefaultDiagnosticTree = function createDefaultDiagnosticTree() {',
+    '  return '+stringifyForModule(tree).replace(/\n/g,'\n  ')+';',
+    '};',
+    ''
+  ].join('\n');
+  downloadText('diagnostic-data.js',content,'text/javascript');
+  alert(E().moduleExported);
+}
+function importDiagnosticTree(event){
+  const file=event.target.files && event.target.files[0];
+  event.target.value='';
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const payload=JSON.parse(reader.result);
+      const tree=Array.isArray(payload) ? payload : payload.tree;
+      if(!Array.isArray(tree) || !tree.length) throw new Error(E().invalidFile);
+      diagnosticTree=normalizeLegacyMarkup(cloneData(tree));
+      activeSectionId=diagnosticTree[0]?.id || '';
+      saveDiagnosticTree();
+      renderDiagnosticUI();
+      alert(E().importComplete);
+    }catch(err){
+      alert(E().importFailed(err.message));
+    }
+  };
+  reader.readAsText(file);
+}
 function serializeGroups(groups){
   return (groups || []).map(group=>{
-    const lines=['Group: '+localized(group.title)];
+    const lines=[E().defaultGroupPrefix + localized(group.title)];
     (localized(group.steps) || []).forEach(step=>lines.push(step));
     return lines.join('\n');
   }).join('\n\n');
@@ -1293,13 +1503,13 @@ function parseGroups(value){
   value.split(/\r?\n/).forEach(raw=>{
     const line=raw.trim();
     if(!line) return;
-    if(/^group\s*:/i.test(line)){
-      current={title:makeLocalized(line.replace(/^group\s*:/i,'').trim() || 'Steps'),steps:{zh:[],en:[]}};
+    if(/^(group\s*:|群組：|群組:)/i.test(line)){
+      current={title:makeLocalized(line.replace(/^(group\s*:|群組：|群組:)/i,'').trim() || E().fallbackGroup),steps:{zh:[],en:[]}};
       groups.push(current);
       return;
     }
     if(!current){
-      current={title:makeLocalized('Steps'),steps:{zh:[],en:[]}};
+      current={title:makeLocalized(E().fallbackGroup),steps:{zh:[],en:[]}};
       groups.push(current);
     }
     const step=line.replace(/^[-*]\s*/,'');

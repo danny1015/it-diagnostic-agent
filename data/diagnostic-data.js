@@ -1,3 +1,5 @@
+window.IT_DIAGNOSTIC_DATA_VERSION = '2026.06.18.1';
+
 window.createDefaultDiagnosticTree = function createDefaultDiagnosticTree(I) {
   const normalizeText = value => String(value ?? '')
     .replace(/<code>([\s\S]*?)<\/code>/gi, '`$1`')
