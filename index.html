@@ -63,6 +63,10 @@ body.edit-mode .tree-toolbar{display:flex}
 .node-sub{font-size:12px;color:var(--text2);margin-top:2px}
 .node-grid{display:grid;gap:8px}.cols-2{grid-template-columns:1fr 1fr}.cols-3{grid-template-columns:1fr 1fr 1fr}
 .node-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;cursor:pointer;transition:all .15s}
+body.edit-mode .node-card{cursor:grab}
+body.edit-mode .node-card:active{cursor:grabbing}
+body.edit-mode .node-card.dragging{opacity:.45;border-style:dashed}
+body.edit-mode .node-grid.drag-over{outline:1px dashed var(--accent2);outline-offset:4px;border-radius:var(--radius-lg)}
 .node-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .node-card-main{min-width:0}
 .edit-actions{display:none;gap:6px;flex-shrink:0}
@@ -833,6 +837,8 @@ function itemById(sectionId,itemId){
   const section=sectionById(sectionId);
   return section ? section.items.find(item => item.id === itemId) : null;
 }
+let dragItemState = null;
+let suppressCardClick = false;
 function findQuestionItem(key){
   for(const section of diagnosticTree){
     const item=section.items.find(entry => entry.id === key);
@@ -910,9 +916,34 @@ function renderTreeTabs(){
     const btn=document.createElement('button');
     btn.className='tab' + (section.id===activeSectionId ? ' active' : '');
     btn.type='button';
+    btn.dataset.sectionId=section.id;
     btn.textContent=localized(section.title);
     btn.addEventListener('click',()=>switchSection(section.id));
+    wireSectionTabDrop(btn,section.id);
     tabs.appendChild(btn);
+  });
+}
+function wireSectionTabDrop(tab,sectionId){
+  tab.addEventListener('dragover',event=>{
+    if(!editMode || !dragItemState) return;
+    event.preventDefault();
+    if(event.dataTransfer) event.dataTransfer.dropEffect='move';
+    activateSectionPane(sectionId);
+  });
+  tab.addEventListener('drop',event=>{
+    if(!editMode || !dragItemState) return;
+    event.preventDefault();
+    moveItemToSection(dragItemState.sectionId,dragItemState.itemId,sectionId);
+  });
+}
+function activateSectionPane(sectionId){
+  if(activeSectionId===sectionId) return;
+  activeSectionId=sectionId;
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.classList.toggle('active',tab.dataset.sectionId===sectionId);
+  });
+  document.querySelectorAll('.tree-section').forEach(pane=>{
+    pane.classList.toggle('active',pane.id==='section-'+sectionId);
   });
 }
 function renderTreeSections(){
@@ -926,10 +957,58 @@ function renderTreeSections(){
     pane.appendChild(renderSectionRoot(section));
     const grid=document.createElement('div');
     grid.className='node-grid ' + (section.items.length <= 2 ? 'cols-2' : 'cols-3');
+    grid.dataset.sectionId=section.id;
+    wireItemDropZone(grid);
     section.items.forEach(entry=>grid.appendChild(renderItemCard(section, entry)));
     pane.appendChild(grid);
     wrap.appendChild(pane);
   });
+}
+function wireItemDropZone(grid){
+  grid.addEventListener('dragover',event=>{
+    if(!editMode || !dragItemState) return;
+    event.preventDefault();
+    grid.classList.add('drag-over');
+    if(event.dataTransfer) event.dataTransfer.dropEffect='move';
+  });
+  grid.addEventListener('dragleave',event=>{
+    if(!grid.contains(event.relatedTarget)) grid.classList.remove('drag-over');
+  });
+  grid.addEventListener('drop',event=>{
+    if(!editMode || !dragItemState) return;
+    event.preventDefault();
+    grid.classList.remove('drag-over');
+    const beforeId=getDropBeforeItemId(grid,event.clientX,event.clientY);
+    moveItemToSection(dragItemState.sectionId,dragItemState.itemId,grid.dataset.sectionId,beforeId);
+  });
+}
+function getDropBeforeItemId(grid,x,y){
+  const cards=[...grid.querySelectorAll('.node-card:not(.dragging)')];
+  let closest={distance:Number.POSITIVE_INFINITY,index:-1,after:false};
+  cards.forEach((card,index)=>{
+    const rect=card.getBoundingClientRect();
+    const distance=Math.hypot(x-(rect.left+rect.width/2),y-(rect.top+rect.height/2));
+    const after=y>rect.top+rect.height/2 || (y>=rect.top && y<=rect.bottom && x>rect.left+rect.width/2);
+    if(distance<closest.distance) closest={distance,index,after};
+  });
+  if(closest.index<0) return '';
+  const targetIndex=closest.after ? closest.index+1 : closest.index;
+  return cards[targetIndex]?.dataset.itemId || '';
+}
+function moveItemToSection(sourceSectionId,itemId,targetSectionId,beforeItemId=''){
+  const source=sectionById(sourceSectionId);
+  const target=sectionById(targetSectionId);
+  if(!source || !target) return;
+  const oldIndex=source.items.findIndex(item=>item.id===itemId);
+  if(oldIndex<0) return;
+  const [item]=source.items.splice(oldIndex,1);
+  let newIndex=beforeItemId ? target.items.findIndex(entry=>entry.id===beforeItemId) : target.items.length;
+  if(newIndex<0) newIndex=target.items.length;
+  if(source===target && oldIndex<newIndex) newIndex--;
+  target.items.splice(newIndex,0,item);
+  activeSectionId=targetSectionId;
+  saveDiagnosticTree();
+  renderDiagnosticUI();
 }
 function renderSectionRoot(section){
   const root=document.createElement('div');
@@ -963,7 +1042,14 @@ function renderSectionRoot(section){
 function renderItemCard(section,entry){
   const card=document.createElement('div');
   card.className='node-card';
-  card.addEventListener('click',()=> entry.groups.length ? toggleCard(card) : askQ(entry.id));
+  card.dataset.sectionId=section.id;
+  card.dataset.itemId=entry.id;
+  card.draggable=editMode;
+  wireItemDrag(card);
+  card.addEventListener('click',()=>{
+    if(suppressCardClick) return;
+    entry.groups.length ? toggleCard(card) : askQ(entry.id);
+  });
   const head=document.createElement('div');
   head.className='node-card-head';
   const main=document.createElement('div');
@@ -1015,6 +1101,24 @@ function renderItemCard(section,entry){
     card.append(toggle,detail);
   }
   return card;
+}
+function wireItemDrag(card){
+  card.addEventListener('dragstart',event=>{
+    if(!editMode) return event.preventDefault();
+    suppressCardClick=true;
+    dragItemState={sectionId:card.dataset.sectionId,itemId:card.dataset.itemId};
+    card.classList.add('dragging');
+    if(event.dataTransfer){
+      event.dataTransfer.effectAllowed='move';
+      event.dataTransfer.setData('text/plain',card.dataset.itemId);
+    }
+  });
+  card.addEventListener('dragend',()=>{
+    card.classList.remove('dragging');
+    document.querySelectorAll('.node-grid.drag-over').forEach(grid=>grid.classList.remove('drag-over'));
+    dragItemState=null;
+    setTimeout(()=>{ suppressCardClick=false; },0);
+  });
 }
 function makeAskButton(key){
   const btn=document.createElement('button');
