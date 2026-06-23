@@ -34,8 +34,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .nav-icon{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
 .nav-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;flex-shrink:0}
 .nav-sub{padding-left:28px;display:none}.nav-sub.open{display:block}
+body.edit-mode .nav-sub{display:block}
 .nav-sub-item{padding:5px 10px;border-radius:var(--radius);cursor:pointer;color:var(--text3);font-size:12px;transition:all .15s;margin-bottom:1px}
-.nav-sub-item:hover{color:var(--text2);background:var(--bg3)}
+.nav-sub-item:hover,.nav-sub-item.active,.nav-sub-item.drop-target{color:var(--text2);background:var(--bg3)}
+.nav-sub-item{display:flex;align-items:center;gap:6px}.nav-sub-label{flex:1;min-width:0}
+.nav-mini-btn{display:none;width:18px;height:18px;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);border-radius:4px;font-size:9px;line-height:1;cursor:pointer}
+body.edit-mode .nav-mini-btn{display:inline-block}.nav-mini-btn:hover{border-color:var(--accent2);color:var(--accent2)}.nav-mini-btn.danger:hover{border-color:var(--danger);color:var(--danger)}
 .sidebar-divider{height:1px;background:var(--border);margin:8px 14px}
 .history-list{padding:0 14px 14px;flex:1}
 .history-item{padding:7px 10px;border-radius:var(--radius);cursor:pointer;margin-bottom:2px;border:1px solid transparent;transition:all .15s}
@@ -307,6 +311,7 @@ body.light .history-item:hover{background:#f0f2f5}
       <div class="panel-title" id="tree-title"></div>
       <div class="tree-toolbar" id="treeToolbar">
         <button class="btn-tool" type="button" onclick="openSectionEditor()" id="btnAddCategory"></button>
+        <button class="btn-tool" type="button" onclick="openSubcategoryEditor(activeSectionId)" id="btnAddSubcategory"></button>
         <button class="btn-tool" type="button" onclick="openItemEditor(activeSectionId)" id="btnAddItem"></button>
         <button class="btn-tool" type="button" onclick="exportDiagnosticTree()" id="btnExportJson"></button>
         <button class="btn-tool" type="button" onclick="exportDefaultModule()" id="btnExportModule"></button>
@@ -414,6 +419,7 @@ body.light .history-item:hover{background:#f0f2f5}
     <div class="modal-sub" id="treeEditorSub"></div>
     <input type="hidden" id="editKind">
     <input type="hidden" id="editSectionId">
+    <input type="hidden" id="editSubcategoryId">
     <input type="hidden" id="editItemId">
 
     <div id="sectionFields">
@@ -435,9 +441,18 @@ body.light .history-item:hover{background:#f0f2f5}
       <input class="form-input" id="sectionRootSubtitle" type="text">
     </div>
 
+    <div id="subcategoryFields">
+      <label class="form-label" id="lblSubcategorySection"></label>
+      <select class="form-input" id="subcategorySection"></select>
+      <label class="form-label" id="lblSubcategoryTitle"></label>
+      <input class="form-input" id="subcategoryTitle" type="text">
+    </div>
+
     <div id="itemFields">
       <label class="form-label" id="lblItemSection"></label>
       <select class="form-input" id="itemSection"></select>
+      <label class="form-label" id="lblItemSubcategory"></label>
+      <select class="form-input" id="itemSubcategory"></select>
       <div class="form-grid">
         <div>
           <label class="form-label" id="lblItemBadge"></label>
@@ -624,6 +639,7 @@ const DIAG_TREE_STORAGE_KEY = 'it_diag_tree';
 const DIAG_DATA_VERSION = window.IT_DIAGNOSTIC_DATA_VERSION || 'dev';
 let diagnosticTree = loadDiagnosticTree();
 let activeSectionId = diagnosticTree[0]?.id || '';
+let activeSubcategoryId = '';
 let editMode = localStorage.getItem('it_edit_mode') === '1';
 let isLoading = false;
 let modalTab = 'claude';
@@ -675,6 +691,7 @@ const EDITOR_I18N = {
     edit:'編輯',
     done:'完成',
     addCategory:'+ 分類',
+    addSubcategory:'+ 子分類',
     addItem:'+ 項目',
     exportJson:'匯出 JSON',
     exportModule:'匯出預設 JS',
@@ -687,6 +704,9 @@ const EDITOR_I18N = {
     rootTitle:'分類標題',
     rootSubtitle:'分類描述',
     category:'分類',
+    subcategory:'子分類',
+    subcategoryName:'子分類名稱',
+    uncategorized:'未分類',
     badge:'標籤',
     badgeColor:'標籤顏色',
     itemTitle:'項目標題',
@@ -697,11 +717,15 @@ const EDITOR_I18N = {
     save:'儲存',
     editCategory:'修改分類',
     addCategoryTitle:'新增分類',
+    editSubcategory:'修改子分類',
+    addSubcategoryTitle:'新增子分類',
     editItem:'修改項目',
     addItemTitle:'新增項目',
     deleteCategory:'刪除分類',
+    deleteSubcategory:'刪除子分類',
     deleteItem:'刪除項目',
     confirmDeleteCategory:title=>'確定刪除分類「'+title+'」？',
+    confirmDeleteSubcategory:title=>'確定刪除子分類「'+title+'」？子分類下的項目會移到未分類。',
     confirmDeleteItem:title=>'確定刪除項目「'+title+'」？',
     confirmReset:'確定要將所有分類與項目重設為發布版預設資料？',
     importComplete:'匯入完成。此瀏覽器已套用匯入的診斷樹。',
@@ -719,6 +743,7 @@ const EDITOR_I18N = {
     edit:'Edit',
     done:'Done',
     addCategory:'+ Category',
+    addSubcategory:'+ Subcategory',
     addItem:'+ Item',
     exportJson:'Export JSON',
     exportModule:'Export Default JS',
@@ -731,6 +756,9 @@ const EDITOR_I18N = {
     rootTitle:'Root Title',
     rootSubtitle:'Root Subtitle',
     category:'Category',
+    subcategory:'Subcategory',
+    subcategoryName:'Subcategory Name',
+    uncategorized:'Uncategorized',
     badge:'Badge',
     badgeColor:'Badge Color',
     itemTitle:'Item Title',
@@ -741,11 +769,15 @@ const EDITOR_I18N = {
     save:'Save',
     editCategory:'Edit category',
     addCategoryTitle:'Add category',
+    editSubcategory:'Edit subcategory',
+    addSubcategoryTitle:'Add subcategory',
     editItem:'Edit item',
     addItemTitle:'Add item',
     deleteCategory:'Delete category',
+    deleteSubcategory:'Delete subcategory',
     deleteItem:'Delete item',
     confirmDeleteCategory:title=>'Delete category "'+title+'"?',
+    confirmDeleteSubcategory:title=>'Delete subcategory "'+title+'"? Items in it will move to Uncategorized.',
     confirmDeleteItem:title=>'Delete item "'+title+'"?',
     confirmReset:'Reset all categories and items to the published default data?',
     importComplete:'Import complete. This browser is now using the imported diagnostic tree.',
@@ -764,6 +796,7 @@ function E(){ return EDITOR_I18N[lang] || EDITOR_I18N.en; }
 function applyEditorLang(){
   const e=E();
   $t('btnAddCategory',e.addCategory);
+  $t('btnAddSubcategory',e.addSubcategory);
   $t('btnAddItem',e.addItem);
   $t('btnExportJson',e.exportJson);
   $t('btnExportModule',e.exportModule);
@@ -775,7 +808,10 @@ function applyEditorLang(){
   $t('lblSectionTag',e.entryTag);
   $t('lblSectionRootTitle',e.rootTitle);
   $t('lblSectionRootSubtitle',e.rootSubtitle);
+  $t('lblSubcategorySection',e.category);
+  $t('lblSubcategoryTitle',e.subcategoryName);
   $t('lblItemSection',e.category);
+  $t('lblItemSubcategory',e.subcategory);
   $t('lblItemBadge',e.badge);
   $t('lblItemBadgeClass',e.badgeColor);
   $t('lblItemTitle',e.itemTitle);
@@ -798,6 +834,9 @@ function updateTreeEditorTitle(){
   if(!title || !kind) return;
   if(kind==='section'){
     title.textContent=document.getElementById('editSectionId').value ? E().editCategory : E().addCategoryTitle;
+  }
+  if(kind==='subcategory'){
+    title.textContent=document.getElementById('editSubcategoryId').value ? E().editSubcategory : E().addSubcategoryTitle;
   }
   if(kind==='item'){
     title.textContent=document.getElementById('editItemId').value ? E().editItem : E().addItemTitle;
@@ -837,6 +876,22 @@ function itemById(sectionId,itemId){
   const section=sectionById(sectionId);
   return section ? section.items.find(item => item.id === itemId) : null;
 }
+function subcategoryById(sectionId,subcategoryId){
+  const section=sectionById(sectionId);
+  return section ? (section.subcategories || []).find(subcategory=>subcategory.id===subcategoryId) : null;
+}
+function ensureSubcategories(){
+  diagnosticTree.forEach(section=>{
+    if(!Array.isArray(section.subcategories)) section.subcategories=[];
+    (section.items || []).forEach(item=>{
+      if(item.subcategoryId && !subcategoryById(section.id,item.subcategoryId)) item.subcategoryId='';
+    });
+  });
+}
+function sectionItems(section){
+  if(activeSubcategoryId==='__uncategorized') return section.items.filter(item=>!item.subcategoryId);
+  return activeSubcategoryId ? section.items.filter(item=>item.subcategoryId===activeSubcategoryId) : section.items;
+}
 let dragItemState = null;
 let suppressCardClick = false;
 function findQuestionItem(key){
@@ -866,7 +921,9 @@ function renderDiagnosticUI(){
     diagnosticTree=cloneData(window.createDefaultDiagnosticTree(I));
     activeSectionId=diagnosticTree[0].id;
   }
+  ensureSubcategories();
   if(!sectionById(activeSectionId)) activeSectionId=diagnosticTree[0].id;
+  if(activeSubcategoryId && activeSubcategoryId!=='__uncategorized' && !subcategoryById(activeSectionId,activeSubcategoryId)) activeSubcategoryId='';
   renderModuleNav();
   renderTreeTabs();
   renderTreeSections();
@@ -894,17 +951,47 @@ function renderModuleNav(){
     nav.appendChild(item);
 
     const sub=document.createElement('div');
-    sub.className='nav-sub' + (section.id===activeSectionId ? ' open' : '');
-    section.items.forEach(entry=>{
+    sub.className='nav-sub' + (editMode || section.id===activeSectionId ? ' open' : '');
+    (section.subcategories || []).forEach(entry=>{
       const subItem=document.createElement('div');
-      subItem.className='nav-sub-item';
-      subItem.textContent=localized(entry.title);
+      subItem.className='nav-sub-item' + (section.id===activeSectionId && entry.id===activeSubcategoryId ? ' active' : '');
+      const label=document.createElement('span');
+      label.className='nav-sub-label';
+      label.textContent=localized(entry.title);
+      subItem.appendChild(label);
       subItem.addEventListener('click',event=>{
         event.stopPropagation();
-        askQ(entry.id);
+        switchSubcategory(section.id,entry.id);
       });
+      wireSubcategoryDrop(subItem,section.id,entry.id);
+      if(editMode){
+        subItem.append(
+          makeInlineNavButton(E().editSubcategory,'E',event=>{
+            event.stopPropagation();
+            openSubcategoryEditor(section.id,entry.id);
+          }),
+          makeInlineNavButton(E().deleteSubcategory,'X',event=>{
+            event.stopPropagation();
+            deleteSubcategory(section.id,entry.id);
+          },'danger')
+        );
+      }
       sub.appendChild(subItem);
     });
+    if(section.items.some(item=>!item.subcategoryId)){
+      const subItem=document.createElement('div');
+      subItem.className='nav-sub-item' + (section.id===activeSectionId && activeSubcategoryId==='__uncategorized' ? ' active' : '');
+      const label=document.createElement('span');
+      label.className='nav-sub-label';
+      label.textContent=E().uncategorized;
+      subItem.appendChild(label);
+      subItem.addEventListener('click',event=>{
+        event.stopPropagation();
+        switchSubcategory(section.id,'__uncategorized');
+      });
+      wireSubcategoryDrop(subItem,section.id,'__uncategorized');
+      sub.appendChild(subItem);
+    }
     nav.appendChild(sub);
   });
 }
@@ -933,12 +1020,30 @@ function wireSectionTabDrop(tab,sectionId){
   tab.addEventListener('drop',event=>{
     if(!editMode || !dragItemState) return;
     event.preventDefault();
-    moveItemToSection(dragItemState.sectionId,dragItemState.itemId,sectionId);
+    moveItemToSection(dragItemState.sectionId,dragItemState.itemId,sectionId,'','');
+  });
+}
+function wireSubcategoryDrop(item,sectionId,subcategoryId){
+  item.addEventListener('dragover',event=>{
+    if(!editMode || !dragItemState) return;
+    event.preventDefault();
+    item.classList.add('drop-target');
+    if(event.dataTransfer) event.dataTransfer.dropEffect='move';
+  });
+  item.addEventListener('dragleave',event=>{
+    if(!item.contains(event.relatedTarget)) item.classList.remove('drop-target');
+  });
+  item.addEventListener('drop',event=>{
+    if(!editMode || !dragItemState) return;
+    event.preventDefault();
+    item.classList.remove('drop-target');
+    moveItemToSection(dragItemState.sectionId,dragItemState.itemId,sectionId,'',subcategoryId);
   });
 }
 function activateSectionPane(sectionId){
   if(activeSectionId===sectionId) return;
   activeSectionId=sectionId;
+  activeSubcategoryId='';
   document.querySelectorAll('.tab').forEach(tab=>{
     tab.classList.toggle('active',tab.dataset.sectionId===sectionId);
   });
@@ -956,10 +1061,12 @@ function renderTreeSections(){
     pane.id='section-'+section.id;
     pane.appendChild(renderSectionRoot(section));
     const grid=document.createElement('div');
-    grid.className='node-grid ' + (section.items.length <= 2 ? 'cols-2' : 'cols-3');
+    const items=sectionItems(section);
+    grid.className='node-grid ' + (items.length <= 2 ? 'cols-2' : 'cols-3');
     grid.dataset.sectionId=section.id;
+    grid.dataset.subcategoryId=activeSubcategoryId;
     wireItemDropZone(grid);
-    section.items.forEach(entry=>grid.appendChild(renderItemCard(section, entry)));
+    items.forEach(entry=>grid.appendChild(renderItemCard(section, entry)));
     pane.appendChild(grid);
     wrap.appendChild(pane);
   });
@@ -979,7 +1086,8 @@ function wireItemDropZone(grid){
     event.preventDefault();
     grid.classList.remove('drag-over');
     const beforeId=getDropBeforeItemId(grid,event.clientX,event.clientY);
-    moveItemToSection(dragItemState.sectionId,dragItemState.itemId,grid.dataset.sectionId,beforeId);
+    const targetSubcategoryId=grid.dataset.subcategoryId || undefined;
+    moveItemToSection(dragItemState.sectionId,dragItemState.itemId,grid.dataset.sectionId,beforeId,targetSubcategoryId);
   });
 }
 function getDropBeforeItemId(grid,x,y){
@@ -995,18 +1103,20 @@ function getDropBeforeItemId(grid,x,y){
   const targetIndex=closest.after ? closest.index+1 : closest.index;
   return cards[targetIndex]?.dataset.itemId || '';
 }
-function moveItemToSection(sourceSectionId,itemId,targetSectionId,beforeItemId=''){
+function moveItemToSection(sourceSectionId,itemId,targetSectionId,beforeItemId='',targetSubcategoryId){
   const source=sectionById(sourceSectionId);
   const target=sectionById(targetSectionId);
   if(!source || !target) return;
   const oldIndex=source.items.findIndex(item=>item.id===itemId);
   if(oldIndex<0) return;
   const [item]=source.items.splice(oldIndex,1);
+  if(targetSubcategoryId!==undefined) item.subcategoryId=targetSubcategoryId==='__uncategorized' ? '' : targetSubcategoryId;
   let newIndex=beforeItemId ? target.items.findIndex(entry=>entry.id===beforeItemId) : target.items.length;
   if(newIndex<0) newIndex=target.items.length;
   if(source===target && oldIndex<newIndex) newIndex--;
   target.items.splice(newIndex,0,item);
   activeSectionId=targetSectionId;
+  activeSubcategoryId=targetSubcategoryId || '';
   saveDiagnosticTree();
   renderDiagnosticUI();
 }
@@ -1116,6 +1226,8 @@ function wireItemDrag(card){
   card.addEventListener('dragend',()=>{
     card.classList.remove('dragging');
     document.querySelectorAll('.node-grid.drag-over').forEach(grid=>grid.classList.remove('drag-over'));
+    document.querySelectorAll('.nav-sub-item.drop-target').forEach(item=>item.classList.remove('drop-target'));
+    renderDiagnosticUI();
     dragItemState=null;
     setTimeout(()=>{ suppressCardClick=false; },0);
   });
@@ -1144,11 +1256,27 @@ function makeIconButton(title,label,onClick,extraClass=''){
   });
   return btn;
 }
+function makeInlineNavButton(title,label,onClick,extraClass=''){
+  const btn=document.createElement('button');
+  btn.className='nav-mini-btn ' + extraClass;
+  btn.type='button';
+  btn.title=title;
+  btn.textContent=label;
+  btn.addEventListener('click',onClick);
+  return btn;
+}
 function fmtInline(value){
   return escapeHtml(value).replace(/`([^`]+)`/g,'<code>$1</code>');
 }
 function switchSection(id){
   activeSectionId=id;
+  activeSubcategoryId='';
+  renderDiagnosticUI();
+  closeSidebar();
+}
+function switchSubcategory(sectionId,subcategoryId){
+  activeSectionId=sectionId;
+  activeSubcategoryId=subcategoryId;
   renderDiagnosticUI();
   closeSidebar();
 }
@@ -1404,13 +1532,43 @@ function populateSectionSelect(selectedId){
     select.appendChild(opt);
   });
 }
+function populateSubcategorySectionSelect(selectedId){
+  const select=document.getElementById('subcategorySection');
+  select.replaceChildren();
+  diagnosticTree.forEach(section=>{
+    const opt=document.createElement('option');
+    opt.value=section.id;
+    opt.textContent=localized(section.title);
+    opt.selected=section.id===selectedId;
+    select.appendChild(opt);
+  });
+}
+function populateItemSubcategorySelect(sectionId,selectedId=''){
+  const select=document.getElementById('itemSubcategory');
+  select.replaceChildren();
+  const empty=document.createElement('option');
+  empty.value='';
+  empty.textContent=E().uncategorized;
+  empty.selected=!selectedId;
+  select.appendChild(empty);
+  const section=sectionById(sectionId);
+  (section?.subcategories || []).forEach(subcategory=>{
+    const opt=document.createElement('option');
+    opt.value=subcategory.id;
+    opt.textContent=localized(subcategory.title);
+    opt.selected=subcategory.id===selectedId;
+    select.appendChild(opt);
+  });
+}
 function openSectionEditor(sectionId=''){
   const section=sectionId ? sectionById(sectionId) : null;
   document.getElementById('editKind').value='section';
   document.getElementById('editSectionId').value=sectionId;
+  document.getElementById('editSubcategoryId').value='';
   document.getElementById('editItemId').value='';
   document.getElementById('treeEditorTitle').textContent=section ? E().editCategory : E().addCategoryTitle;
   document.getElementById('sectionFields').style.display='block';
+  document.getElementById('subcategoryFields').style.display='none';
   document.getElementById('itemFields').style.display='none';
   document.getElementById('sectionTitle').value=section ? localized(section.title) : '';
   document.getElementById('sectionIcon').value=section ? section.icon : '';
@@ -1420,16 +1578,36 @@ function openSectionEditor(sectionId=''){
   document.getElementById('treeEditorOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('sectionTitle').focus(),50);
 }
+function openSubcategoryEditor(sectionId='',subcategoryId=''){
+  const section=sectionById(sectionId) || diagnosticTree[0];
+  const subcategory=subcategoryId ? subcategoryById(section.id,subcategoryId) : null;
+  document.getElementById('editKind').value='subcategory';
+  document.getElementById('editSectionId').value=section.id;
+  document.getElementById('editSubcategoryId').value=subcategoryId;
+  document.getElementById('editItemId').value='';
+  document.getElementById('treeEditorTitle').textContent=subcategory ? E().editSubcategory : E().addSubcategoryTitle;
+  document.getElementById('sectionFields').style.display='none';
+  document.getElementById('subcategoryFields').style.display='block';
+  document.getElementById('itemFields').style.display='none';
+  populateSubcategorySectionSelect(section.id);
+  document.getElementById('subcategoryTitle').value=subcategory ? localized(subcategory.title) : '';
+  document.getElementById('treeEditorOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('subcategoryTitle').focus(),50);
+}
 function openItemEditor(sectionId='',itemId=''){
   const section=sectionById(sectionId) || diagnosticTree[0];
   const entry=itemId ? itemById(section.id,itemId) : null;
   document.getElementById('editKind').value='item';
   document.getElementById('editSectionId').value=section.id;
+  document.getElementById('editSubcategoryId').value='';
   document.getElementById('editItemId').value=itemId;
   document.getElementById('treeEditorTitle').textContent=entry ? E().editItem : E().addItemTitle;
   document.getElementById('sectionFields').style.display='none';
+  document.getElementById('subcategoryFields').style.display='none';
   document.getElementById('itemFields').style.display='block';
   populateSectionSelect(section.id);
+  populateItemSubcategorySelect(section.id,entry ? entry.subcategoryId : (activeSubcategoryId==='__uncategorized' ? '' : activeSubcategoryId));
+  document.getElementById('itemSection').onchange=event=>populateItemSubcategorySelect(event.target.value,'');
   document.getElementById('itemBadge').value=entry ? localized(entry.badge) : '';
   document.getElementById('itemBadgeClass').value=entry ? entry.badgeClass : 'badge-blue';
   document.getElementById('itemTitle').value=entry ? localized(entry.title) : '';
@@ -1443,6 +1621,7 @@ function closeTreeEditor(){ document.getElementById('treeEditorOverlay').classLi
 function saveTreeEditor(){
   const kind=document.getElementById('editKind').value;
   if(kind==='section') saveSectionEditor();
+  if(kind==='subcategory') saveSubcategoryEditor();
   if(kind==='item') saveItemEditor();
 }
 function saveSectionEditor(){
@@ -1464,6 +1643,7 @@ function saveSectionEditor(){
       id:uid('section'),
       iconBg:'rgba(136,146,164,.15)',
       accent:'var(--accent)',
+      subcategories:[],
       items:[],
       ...payload
     };
@@ -1474,10 +1654,44 @@ function saveSectionEditor(){
   closeTreeEditor();
   renderDiagnosticUI();
 }
+function saveSubcategoryEditor(){
+  const oldSectionId=document.getElementById('editSectionId').value;
+  const subcategoryId=document.getElementById('editSubcategoryId').value;
+  const newSectionId=document.getElementById('subcategorySection').value;
+  const title=document.getElementById('subcategoryTitle').value.trim();
+  if(!title) return;
+  const target=sectionById(newSectionId);
+  if(!target) return;
+  if(!Array.isArray(target.subcategories)) target.subcategories=[];
+  const payload={ title:makeLocalized(title) };
+  if(subcategoryId){
+    const oldSection=sectionById(oldSectionId);
+    const existing=subcategoryById(oldSectionId,subcategoryId);
+    if(!oldSection || !existing) return;
+    Object.assign(existing,payload);
+    if(oldSectionId!==newSectionId){
+      oldSection.subcategories=oldSection.subcategories.filter(subcategory=>subcategory.id!==subcategoryId);
+      target.subcategories.push(existing);
+      oldSection.items.forEach(item=>{
+        if(item.subcategoryId===subcategoryId) item.subcategoryId='';
+      });
+    }
+  }else{
+    const subcategory={ id:uid('subcategory'), ...payload };
+    target.subcategories.push(subcategory);
+    activeSubcategoryId=subcategory.id;
+  }
+  activeSectionId=newSectionId;
+  if(subcategoryId) activeSubcategoryId=oldSectionId===newSectionId ? subcategoryId : '';
+  saveDiagnosticTree();
+  closeTreeEditor();
+  renderDiagnosticUI();
+}
 function saveItemEditor(){
   const oldSectionId=document.getElementById('editSectionId').value;
   const itemId=document.getElementById('editItemId').value;
   const newSectionId=document.getElementById('itemSection').value;
+  const newSubcategoryId=document.getElementById('itemSubcategory').value;
   const title=document.getElementById('itemTitle').value.trim();
   if(!title) return;
   const payload={
@@ -1486,6 +1700,7 @@ function saveItemEditor(){
     title:makeLocalized(title),
     subtitle:makeLocalized(document.getElementById('itemSubtitle').value.trim()),
     question:makeLocalized(document.getElementById('itemQuestion').value.trim()),
+    subcategoryId:newSubcategoryId,
     groups:parseGroups(document.getElementById('itemGroups').value)
   };
   const target=sectionById(newSectionId);
@@ -1502,6 +1717,7 @@ function saveItemEditor(){
     target.items.push({ id:uid('item'), ...payload });
   }
   activeSectionId=newSectionId;
+  activeSubcategoryId=newSubcategoryId;
   saveDiagnosticTree();
   closeTreeEditor();
   renderDiagnosticUI();
@@ -1512,6 +1728,19 @@ function deleteSection(sectionId){
   if(!confirm(E().confirmDeleteCategory(localized(section.title)))) return;
   diagnosticTree=diagnosticTree.filter(entry=>entry.id!==sectionId);
   activeSectionId=diagnosticTree[0]?.id || '';
+  saveDiagnosticTree();
+  renderDiagnosticUI();
+}
+function deleteSubcategory(sectionId,subcategoryId){
+  const section=sectionById(sectionId);
+  const subcategory=subcategoryById(sectionId,subcategoryId);
+  if(!section || !subcategory) return;
+  if(!confirm(E().confirmDeleteSubcategory(localized(subcategory.title)))) return;
+  section.subcategories=section.subcategories.filter(entry=>entry.id!==subcategoryId);
+  section.items.forEach(item=>{
+    if(item.subcategoryId===subcategoryId) item.subcategoryId='';
+  });
+  if(activeSubcategoryId===subcategoryId) activeSubcategoryId='__uncategorized';
   saveDiagnosticTree();
   renderDiagnosticUI();
 }
