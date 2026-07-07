@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240" viewBox="0 0 640 240">
+  <rect width="640" height="240" fill="#15191f"/>
+  <g fill="#20262e" stroke="#00d4aa" stroke-width="3">
+    <rect x="48" y="82" width="144" height="76" rx="6"/>
+    <rect x="248" y="82" width="144" height="76" rx="6"/>
+    <rect x="448" y="82" width="144" height="76" rx="6"/>
+  </g>
+  <g stroke="#0099ff" stroke-width="4">
+    <path d="M192 120h56"/>
+    <path d="M392 120h56"/>
+  </g>
+  <g fill="#e7edf5" font-family="Arial, sans-serif" font-size="20" text-anchor="middle">
+    <text x="120" y="128">Client</text>
+    <text x="320" y="128">Switch</text>
+    <text x="520" y="128">Server</text>
+  </g>
+</svg>
