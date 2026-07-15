@@ -53,6 +53,7 @@ body.edit-mode .nav-mini-btn{display:inline-block}.nav-mini-btn:hover{border-col
 .tab-row{display:flex;gap:6px;margin-bottom:18px}
 .tree-toolbar{display:none;gap:8px;flex-wrap:wrap;margin:-6px 0 16px}
 body.edit-mode .tree-toolbar{display:flex}
+body.viewer-only #btnEditTree,body.viewer-only .tree-toolbar,body.viewer-only .edit-actions{display:none!important}
 .btn-tool{background:var(--bg2);border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);font-family:var(--mono);font-size:10px;padding:5px 10px;cursor:pointer}
 .btn-tool:hover{border-color:var(--accent2);color:var(--accent2)}
 .btn-danger:hover{border-color:var(--danger);color:var(--danger)}
@@ -665,10 +666,12 @@ let chatHistory = [];
 let sessionHistory = loadHistory();
 const DIAG_TREE_STORAGE_KEY = 'it_diag_tree';
 const DIAG_DATA_VERSION = window.IT_DIAGNOSTIC_DATA_VERSION || 'dev';
+const ADMIN_HOSTS = ['itdiag-admin.dannylin.cc','localhost','127.0.0.1',''];
+const IS_ADMIN_HOST = ADMIN_HOSTS.includes(location.hostname);
 let diagnosticTree = loadDiagnosticTree();
 let activeSectionId = diagnosticTree[0]?.id || '';
 let activeSubcategoryId = '';
-let editMode = localStorage.getItem('it_edit_mode') === '1';
+let editMode = IS_ADMIN_HOST && localStorage.getItem('it_edit_mode') === '1';
 let isLoading = false;
 let modalTab = 'claude';
 
@@ -953,6 +956,8 @@ function findQuestionItem(key){
 }
 function uid(prefix){ return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,6); }
 function syncEditMode(){
+  if(!IS_ADMIN_HOST) editMode=false;
+  document.body.classList.toggle('viewer-only', !IS_ADMIN_HOST);
   document.body.classList.toggle('edit-mode', editMode);
   const btn=document.getElementById('btnEditTree');
   if(btn){
@@ -961,11 +966,13 @@ function syncEditMode(){
   }
 }
 function toggleEditMode(){
+  if(!IS_ADMIN_HOST) return;
   editMode=!editMode;
   localStorage.setItem('it_edit_mode', editMode ? '1' : '0');
   syncEditMode();
   renderDiagnosticUI();
 }
+function isAdminAction(){ return IS_ADMIN_HOST; }
 function renderDiagnosticUI(){
   if(!diagnosticTree.length){
     diagnosticTree=cloneData(window.createDefaultDiagnosticTree(I));
@@ -1684,6 +1691,7 @@ function populateItemSubcategorySelect(sectionId,selectedId=''){
   });
 }
 function openSectionEditor(sectionId=''){
+  if(!isAdminAction()) return;
   const section=sectionId ? sectionById(sectionId) : null;
   document.getElementById('editKind').value='section';
   document.getElementById('editSectionId').value=sectionId;
@@ -1702,6 +1710,7 @@ function openSectionEditor(sectionId=''){
   setTimeout(()=>document.getElementById('sectionTitle').focus(),50);
 }
 function openSubcategoryEditor(sectionId='',subcategoryId=''){
+  if(!isAdminAction()) return;
   const section=sectionById(sectionId) || diagnosticTree[0];
   const subcategory=subcategoryId ? subcategoryById(section.id,subcategoryId) : null;
   document.getElementById('editKind').value='subcategory';
@@ -1718,6 +1727,7 @@ function openSubcategoryEditor(sectionId='',subcategoryId=''){
   setTimeout(()=>document.getElementById('subcategoryTitle').focus(),50);
 }
 function openItemEditor(sectionId='',itemId=''){
+  if(!isAdminAction()) return;
   const section=sectionById(sectionId) || diagnosticTree[0];
   const entry=itemId ? itemById(section.id,itemId) : null;
   document.getElementById('editKind').value='item';
@@ -1799,12 +1809,14 @@ function collectAttachments(){
   return attachments;
 }
 function saveTreeEditor(){
+  if(!isAdminAction()) return;
   const kind=document.getElementById('editKind').value;
   if(kind==='section') saveSectionEditor();
   if(kind==='subcategory') saveSubcategoryEditor();
   if(kind==='item') saveItemEditor();
 }
 function saveSectionEditor(){
+  if(!isAdminAction()) return;
   const sectionId=document.getElementById('editSectionId').value;
   const title=document.getElementById('sectionTitle').value.trim();
   if(!title) return;
@@ -1835,6 +1847,7 @@ function saveSectionEditor(){
   renderDiagnosticUI();
 }
 function saveSubcategoryEditor(){
+  if(!isAdminAction()) return;
   const oldSectionId=document.getElementById('editSectionId').value;
   const subcategoryId=document.getElementById('editSubcategoryId').value;
   const newSectionId=document.getElementById('subcategorySection').value;
@@ -1868,6 +1881,7 @@ function saveSubcategoryEditor(){
   renderDiagnosticUI();
 }
 function saveItemEditor(){
+  if(!isAdminAction()) return;
   const oldSectionId=document.getElementById('editSectionId').value;
   const itemId=document.getElementById('editItemId').value;
   const newSectionId=document.getElementById('itemSection').value;
@@ -1906,6 +1920,7 @@ function saveItemEditor(){
   renderDiagnosticUI();
 }
 function deleteSection(sectionId){
+  if(!isAdminAction()) return;
   const section=sectionById(sectionId);
   if(!section) return;
   if(!confirm(E().confirmDeleteCategory(localized(section.title)))) return;
@@ -1915,6 +1930,7 @@ function deleteSection(sectionId){
   renderDiagnosticUI();
 }
 function deleteSubcategory(sectionId,subcategoryId){
+  if(!isAdminAction()) return;
   const section=sectionById(sectionId);
   const subcategory=subcategoryById(sectionId,subcategoryId);
   if(!section || !subcategory) return;
@@ -1928,6 +1944,7 @@ function deleteSubcategory(sectionId,subcategoryId){
   renderDiagnosticUI();
 }
 function deleteItem(sectionId,itemId){
+  if(!isAdminAction()) return;
   const section=sectionById(sectionId);
   const entry=itemById(sectionId,itemId);
   if(!section || !entry) return;
@@ -1937,20 +1954,34 @@ function deleteItem(sectionId,itemId){
   renderDiagnosticUI();
 }
 function resetDiagnosticTree(){
+  if(!isAdminAction()) return;
   if(!confirm(E().confirmReset)) return;
   localStorage.removeItem(DIAG_TREE_STORAGE_KEY);
   diagnosticTree=normalizeLegacyMarkup(cloneData(window.createDefaultDiagnosticTree(I)));
   activeSectionId=diagnosticTree[0]?.id || '';
   renderDiagnosticUI();
 }
+function localExportTimestamp(date=new Date()){
+  const pad=value=>String(value).padStart(2,'0');
+  return [
+    date.getFullYear(),
+    pad(date.getMonth()+1),
+    pad(date.getDate())
+  ].join('') + '-' + [
+    pad(date.getHours()),
+    pad(date.getMinutes()),
+    pad(date.getSeconds())
+  ].join('');
+}
 function exportDiagnosticTree(){
+  if(!isAdminAction()) return;
   const payload={
     app:'it-diagnostic-agent',
     version:DIAG_DATA_VERSION,
     exportedAt:new Date().toISOString(),
     tree:diagnosticTree
   };
-  downloadText('it-diagnostic-tree-'+DIAG_DATA_VERSION+'.json',JSON.stringify(payload,null,2),'application/json');
+  downloadText('it-diagnostic-tree-'+localExportTimestamp()+'.json',JSON.stringify(payload,null,2),'application/json');
 }
 function downloadText(filename,content,type){
   const blob=new Blob([content],{type:type || 'text/plain'});
@@ -1970,6 +2001,7 @@ function stringifyForModule(value){
   return JSON.stringify(value,null,2).replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 }
 function exportDefaultModule(){
+  if(!isAdminAction()) return;
   const rawVersion=prompt(E().versionPrompt,DIAG_DATA_VERSION);
   if(rawVersion===null) return;
   const version=cleanDataVersion(rawVersion);
@@ -1986,6 +2018,7 @@ function exportDefaultModule(){
   alert(E().moduleExported);
 }
 function importDiagnosticTree(event){
+  if(!isAdminAction()) return;
   const file=event.target.files && event.target.files[0];
   event.target.value='';
   if(!file) return;
